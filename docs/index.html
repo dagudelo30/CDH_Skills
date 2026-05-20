@@ -770,7 +770,7 @@
   <ul class="nav-links">
     <li><a href="#skills">Skills</a></li>
     <li><a href="#workflow">How it works</a></li>
-    <li><a href="https://github.com/dagudelo30/CDH_Skills" target="_blank">GitHub ↗</a></li>
+    <li><a href="https://github.com/anaguilarar/CDH_Skills" target="_blank">GitHub ↗</a></li>
   </ul>
 </nav>
 
@@ -788,7 +788,7 @@
     <a href="#skills" class="btn-primary">
       Browse skills ↓
     </a>
-    <a href="https://github.com/dagudelo30/CDH_Skills" target="_blank" class="btn-ghost">
+    <a href="https://github.com/anaguilarar/CDH_Skills" target="_blank" class="btn-ghost">
       View on GitHub
     </a>
   </div>
@@ -899,7 +899,7 @@ chirts = <span class="fn">fetch_chirts</span>(<span class="str">"Honduras"</span
           <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
           Open in Colab
         </button>
-        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+        <a href="https://github.com/anaguilarar/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
       </div>
     </div>
 
@@ -952,7 +952,7 @@ df   = <span class="fn">summarize_by_admin</span>(eth, boundaries,
           <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
           Open in Colab
         </button>
-        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+        <a href="https://github.com/anaguilarar/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
       </div>
     </div>
 
@@ -1004,7 +1004,7 @@ df   = <span class="fn">summarize_by_admin</span>(eth, boundaries,
           <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
           Open in Colab
         </button>
-        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+        <a href="https://github.com/anaguilarar/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
       </div>
     </div>
 
@@ -1063,7 +1063,7 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
 <footer>
   <div class="footer-brand">CGIAR · CDH_Skills · MIT</div>
   <div class="footer-links">
-    <a href="https://github.com/dagudelo30/CDH_Skills" target="_blank">GitHub</a>
+    <a href="https://github.com/anaguilarar/CDH_Skills" target="_blank">GitHub</a>
     <a href="mailto:andres.aguilar@cgiar.org">Contact</a>
     <a href="https://www.cgiar.org" target="_blank">CGIAR</a>
   </div>
@@ -1236,31 +1236,89 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
     };
   }
 
-  // ── SKILL 1: Download ──
+  // ── Shared: Gemini prompt builder ───────────────────────────────
+  // Returns a code cell whose comment block IS the Gemini prompt.
+  // When the user clicks ✨ in Colab, Gemini reads it and generates code.
+
+  function geminiCell(skillName, apiDocs, params, task) {
+    const header = `# ${'='.repeat(60)}
+# CDH SKILL: ${skillName}
+# Repository: https://github.com/${GITHUB_USER}/${REPO_NAME}
+# ${'='.repeat(60)}
+#
+# SKILL DESCRIPTION & API:
+${apiDocs.split('\n').map(l => '# ' + l).join('\n')}
+#
+# USER PARAMETERS (already defined above — do not redefine):
+${params.split('\n').map(l => '#   ' + l).join('\n')}
+#
+# YOUR TASK:
+${task.split('\n').map(l => '# ' + l).join('\n')}
+# ${'='.repeat(60)}
+
+# ✨ Click the Gemini button (stars icon, top-right of this cell) → Generate
+# Gemini will read the skill description above and write the full code here.
+# Then click ▶ Run to execute.`;
+    return makeCell(header);
+  }
+
+  // ── SKILL 1: Download ────────────────────────────────────────────
   function buildDownloadNotebook(p) {
     const dlPrecip = p.vars.includes('precipitation');
     const dlTmax   = p.vars.includes('tmax');
     const dlTmin   = p.vars.includes('tmin');
     const dlSolar  = p.vars.includes('solar_rad');
 
+    const apiDocs = `fetch_chirps(country, start_date, end_date) → xr.Dataset
+  Downloads daily precipitation from CHIRPS (0.05°, 1981–present)
+fetch_chirts(country, start_date, end_date, variables=["tmax","tmin"]) → xr.Dataset
+  Downloads daily Tmax/Tmin from CHIRTS-ERA5
+fetch_nasa_power(country, start_date, end_date, variables=["ALLSKY_SFC_SW_DWN"]) → xr.Dataset
+  Downloads solar radiation or humidity from NASA POWER (S3 Zarr)
+All functions are imported from the cdh package.
+All return CF-compliant xarray Datasets.`;
+
+    const params = `COUNTRY      = "${p.country}"
+COUNTRY_ISO3 = "${p.iso3}"
+START_DATE   = "${p.y0}-01-01"
+END_DATE     = "${p.y1}-12-31"
+WORK_DIR     = "/content/cdh_${p.iso3}"
+DOWNLOAD_PRECIP = ${dlPrecip}
+DOWNLOAD_TMAX   = ${dlTmax}
+DOWNLOAD_TMIN   = ${dlTmin}
+DOWNLOAD_SOLAR  = ${dlSolar}`;
+
+    const task = `Generate complete ready-to-run Python code that:
+1. Imports fetch_chirps, fetch_chirts, fetch_nasa_power from cdh
+2. For each variable where DOWNLOAD_* is True, calls the correct function
+   and saves the result as NetCDF in WORK_DIR:
+     precipitation → chirps_${p.iso3}.nc
+     tmax/tmin     → chirts_${p.iso3}.nc
+     solar_rad     → nasa_power_${p.iso3}.nc
+3. Prints a progress message before each download
+4. After all downloads, lists all .nc files in WORK_DIR with their
+   variable names, time range, and file size in MB`;
+
     return notebookShell([
       makeCell([
         `# 🌧️ CDH Skill — Climate Data Download`,
         `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
         ``,
+        `Skill: \`climate-data-download\``,
+        ``,
         `| Parameter | Value |`,
         `|---|---|`,
         `| Country | **${p.country}** (${p.iso3}) |`,
-        `| Period | **${p.y0}** → **${p.y1}** |`,
+        `| Period | **${p.y0}-01-01** → **${p.y1}-12-31** |`,
         `| Variables | **${p.vars.join(', ')}** |`,
         ``,
-        `Execute cells in order — all parameters are pre-configured.`
+        `**Steps:** Run Cell 1 → Cell 2 → then in Cell 3 click ✨ Gemini → Generate → Run`
       ].join('\n'), 'markdown'),
 
       makeCell(
         `# Cell 1 — Install CDH package\n` +
         `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git\n` +
-        `print('✅ CDH package installed')`
+        `print("✅ CDH package ready")`
       ),
 
       makeCell(
@@ -1269,155 +1327,172 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
         `COUNTRY_ISO3 = "${p.iso3}"\n` +
         `START_DATE   = "${p.y0}-01-01"\n` +
         `END_DATE     = "${p.y1}-12-31"\n` +
-        `OUTPUT_DIR   = "/content/cdh_${p.iso3}"\n\n` +
+        `WORK_DIR     = "/content/cdh_${p.iso3}"\n` +
         `DOWNLOAD_PRECIP = ${dlPrecip}\n` +
         `DOWNLOAD_TMAX   = ${dlTmax}\n` +
         `DOWNLOAD_TMIN   = ${dlTmin}\n` +
         `DOWNLOAD_SOLAR  = ${dlSolar}\n\n` +
-        `import os\n` +
-        `os.makedirs(OUTPUT_DIR, exist_ok=True)\n` +
-        `print(f"📍 Country: {COUNTRY} ({COUNTRY_ISO3})")\n` +
-        `print(f"📅 Period:  {START_DATE} → {END_DATE}")\n` +
-        `print(f"📁 Output:  {OUTPUT_DIR}")`
+        `import os; os.makedirs(WORK_DIR, exist_ok=True)\n` +
+        `print(f"📍 {p.country} ({p.iso3})  |  {p.y0} → {p.y1}  |  vars: ${p.vars.join(', ')}")\n` +
+        `print(f"📁 Work dir: {WORK_DIR}")\n` +
+        `print("✅ Parameters loaded — proceed to Cell 3")`
       ),
 
-      makeCell(
-        `# Cell 3 — Download data\n` +
-        `from cdh import fetch_chirps, fetch_chirts, fetch_nasa_power\n\n` +
-        `datasets = {}\n\n` +
-        `if DOWNLOAD_PRECIP:\n` +
-        `    print("🌧️  Downloading precipitation from CHIRPS...")\n` +
-        `    datasets['precipitation'] = fetch_chirps(COUNTRY, START_DATE, END_DATE)\n` +
-        `    datasets['precipitation'].to_netcdf(f"{OUTPUT_DIR}/chirps_{COUNTRY_ISO3}.nc")\n` +
-        `    print("   ✅ Saved")\n\n` +
-        `tmax_vars = []\n` +
-        `if DOWNLOAD_TMAX: tmax_vars.append("tmax")\n` +
-        `if DOWNLOAD_TMIN: tmax_vars.append("tmin")\n` +
-        `if tmax_vars:\n` +
-        `    print(f"🌡️  Downloading {tmax_vars} from CHIRTS-ERA5...")\n` +
-        `    ds_t = fetch_chirts(COUNTRY, START_DATE, END_DATE, variables=tmax_vars)\n` +
-        `    ds_t.to_netcdf(f"{OUTPUT_DIR}/chirts_{COUNTRY_ISO3}.nc")\n` +
-        `    datasets.update({v: ds_t for v in tmax_vars})\n` +
-        `    print("   ✅ Saved")\n\n` +
-        `if DOWNLOAD_SOLAR:\n` +
-        `    print("☀️  Downloading solar radiation from NASA POWER...")\n` +
-        `    datasets['solar_rad'] = fetch_nasa_power(COUNTRY, START_DATE, END_DATE,\n` +
-        `                                             variables=["ALLSKY_SFC_SW_DWN"])\n` +
-        `    datasets['solar_rad'].to_netcdf(f"{OUTPUT_DIR}/nasa_power_{COUNTRY_ISO3}.nc")\n` +
-        `    print("   ✅ Saved")\n\n` +
-        `print(f"\\n✅ Download complete — {len(datasets)} variable(s) saved to {OUTPUT_DIR}")`
-      ),
-
-      makeCell(
-        `# Cell 4 — Quick inspection\n` +
-        `import os, xarray as xr\n` +
-        `files = [f for f in os.listdir(OUTPUT_DIR) if f.endswith('.nc')]\n` +
-        `for f in files:\n` +
-        `    ds = xr.open_dataset(f"{OUTPUT_DIR}/{f}")\n` +
-        `    print(f"📄 {f}")\n` +
-        `    print(f"   vars:  {list(ds.data_vars)}")\n` +
-        `    print(f"   time:  {str(ds.time.values[0])[:10]} → {str(ds.time.values[-1])[:10]}")\n` +
-        `    print(f"   shape: {dict(ds.dims)}\\n")\n` +
-        `    ds.close()`
-      ),
-
-      makeCell([
-        `## ✅ Next steps`,
-        ``,
-        `Continue with the **Geospatial Cube Processor** skill to clip and summarize your data,`,
-        `or open the **Full Pipeline** to run everything in one go.`
-      ].join('\n'), 'markdown')
+      geminiCell('climate-data-download', apiDocs, params, task),
 
     ], `CDH — Climate Data Download — ${p.country} ${p.y0}–${p.y1}`);
   }
 
-  // ── SKILL 2: Processor ──
+  // ── SKILL 2: Processor ───────────────────────────────────────────
   function buildProcessorNotebook(p) {
     const adminLabel = ['country','province/state','district'][p.adminLvl];
+
+    const apiDocs = `from cdh.transform  import stack_datasets
+from cdh.spatial    import mask_to_admin
+from cdh.summarize  import summarize_by_admin
+
+stack_datasets(list_of_xr_datasets, target_resolution="coarsest",
+               resampling_method="bilinear") → xr.Dataset
+  Reprojects and merges multiple datasets onto a common grid.
+  target_resolution: "coarsest", "finest", or degrees (e.g. 0.05)
+
+mask_to_admin(ds, country_iso3, admin_level=0) → (xr.Dataset, gpd.GeoDataFrame)
+  Clips dataset to GADM v4.1 administrative boundary.
+  Returns (clipped_dataset, boundaries_geodataframe).
+  admin_level: 0=country, 1=province/state, 2=district
+
+summarize_by_admin(ds, boundaries, agg_method="mean",
+                   temporal_freq=None, output_csv=None) → pd.DataFrame
+  Computes per-admin-unit statistics.
+  temporal_freq: "ME"=monthly, "QE"=quarterly, "YE"=yearly
+  Returns DataFrame with columns: admin_unit, variable, time, value`;
+
+    const params = `COUNTRY       = "${p.country}"
+COUNTRY_ISO3  = "${p.iso3}"
+ADMIN_LEVEL   = ${p.adminLvl}   # ${adminLabel}
+START_DATE    = "${p.y0}-01-01"
+END_DATE      = "${p.y1}-12-31"
+WORK_DIR      = "/content/cdh_${p.iso3}"
+AGG_METHOD    = "mean"
+TEMPORAL_FREQ = "ME"`;
+
+    const task = `Generate complete ready-to-run Python code that:
+1. Loads all .nc files from WORK_DIR into a list of xarray Datasets
+   (print which files were found)
+2. If more than 1 dataset: stacks them with stack_datasets(datasets, "coarsest")
+   If only 1: use it directly as the cube
+3. Clips to admin boundary:
+   cube_masked, boundaries = mask_to_admin(cube, COUNTRY_ISO3, ADMIN_LEVEL)
+4. Saves cube_masked to WORK_DIR/${p.iso3}_cube.nc
+5. Summarizes with summarize_by_admin using AGG_METHOD and TEMPORAL_FREQ,
+   saves CSV to WORK_DIR/${p.iso3}_admin${p.adminLvl}_summary.csv
+6. Prints: number of admin units found, total rows in CSV,
+   and displays the first 10 rows of the DataFrame`;
+
     return notebookShell([
       makeCell([
         `# 🗺️ CDH Skill — Geospatial Cube Processor`,
         `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
         ``,
-        `| Parameter | Value |`,`|---|---|`,
+        `Skill: \`geospatial-cube-processor\``,
+        ``,
+        `| Parameter | Value |`,
+        `|---|---|`,
         `| Country | **${p.country}** (${p.iso3}) |`,
         `| Admin level | **${p.adminLvl}** — ${adminLabel} |`,
-        `| Period | **${p.y0}** → **${p.y1}** |`
+        `| Aggregation | mean / monthly |`,
+        ``,
+        `**Steps:** Run Cell 1 → Cell 2 → then in Cell 3 click ✨ Gemini → Generate → Run`
       ].join('\n'), 'markdown'),
 
       makeCell(
         `# Cell 1 — Install\n` +
         `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git geopandas rioxarray\n` +
-        `print('✅ Ready')`
+        `print("✅ Ready")`
       ),
 
       makeCell(
         `# Cell 2 — Parameters (pre-configured)\n` +
-        `COUNTRY      = "${p.country}"\n` +
-        `COUNTRY_ISO3 = "${p.iso3}"\n` +
-        `ADMIN_LEVEL  = ${p.adminLvl}\n` +
-        `START_DATE   = "${p.y0}-01-01"\n` +
-        `END_DATE     = "${p.y1}-12-31"\n` +
-        `WORK_DIR     = "/content/cdh_${p.iso3}"\n` +
-        `AGG_METHOD   = "mean"    # mean / sum / max / min\n` +
-        `TEMPORAL_FREQ= "ME"      # ME=monthly  QE=quarterly  YE=yearly\n\n` +
-        `import os\n` +
-        `os.makedirs(WORK_DIR, exist_ok=True)\n` +
-        `print(f"📍 {COUNTRY} ({COUNTRY_ISO3}) — admin level {ADMIN_LEVEL}")`
+        `COUNTRY       = "${p.country}"\n` +
+        `COUNTRY_ISO3  = "${p.iso3}"\n` +
+        `ADMIN_LEVEL   = ${p.adminLvl}\n` +
+        `START_DATE    = "${p.y0}-01-01"\n` +
+        `END_DATE      = "${p.y1}-12-31"\n` +
+        `WORK_DIR      = "/content/cdh_${p.iso3}"\n` +
+        `AGG_METHOD    = "mean"\n` +
+        `TEMPORAL_FREQ = "ME"\n\n` +
+        `import os; os.makedirs(WORK_DIR, exist_ok=True)\n` +
+        `print(f"📍 {p.country} ({p.iso3}) — admin level ${p.adminLvl} (${adminLabel})")\n` +
+        `print("✅ Parameters loaded — proceed to Cell 3")`
       ),
 
-      makeCell(
-        `# Cell 3 — Load downloaded NetCDF files\n` +
-        `import xarray as xr, os\n\n` +
-        `nc_files = [f"{WORK_DIR}/{f}" for f in os.listdir(WORK_DIR) if f.endswith('.nc')]\n` +
-        `datasets = [xr.open_dataset(f) for f in nc_files]\n` +
-        `print(f"📦 Loaded {len(datasets)} dataset(s):")\n` +
-        `for f, ds in zip(nc_files, datasets):\n` +
-        `    print(f"   {os.path.basename(f)}: {list(ds.data_vars)}")`
-      ),
+      geminiCell('geospatial-cube-processor', apiDocs, params, task),
 
-      makeCell(
-        `# Cell 4 — Stack, mask to admin boundary and summarize\n` +
-        `from cdh.transform import stack_datasets\n` +
-        `from cdh.spatial  import mask_to_admin\n` +
-        `from cdh.summarize import summarize_by_admin\n\n` +
-        `# Combine all datasets into one cube\n` +
-        `print("🔗 Stacking datasets...")\n` +
-        `cube = stack_datasets(datasets, target_resolution="coarsest") if len(datasets) > 1 else datasets[0]\n\n` +
-        `# Clip to administrative boundary\n` +
-        `print(f"✂️  Clipping to {COUNTRY} admin level {ADMIN_LEVEL}...")\n` +
-        `cube_masked, boundaries = mask_to_admin(cube, COUNTRY_ISO3, admin_level=ADMIN_LEVEL)\n` +
-        `cube_masked.to_netcdf(f"{WORK_DIR}/{COUNTRY_ISO3}_cube.nc")\n` +
-        `print("   ✅ Cube saved")\n\n` +
-        `# Compute zonal statistics per admin unit\n` +
-        `print(f"📊 Summarizing by admin unit ({AGG_METHOD} / {TEMPORAL_FREQ})...")\n` +
-        `output_csv = f"{WORK_DIR}/{COUNTRY_ISO3}_admin{ADMIN_LEVEL}_summary.csv"\n` +
-        `df = summarize_by_admin(cube_masked, boundaries,\n` +
-        `                        agg_method=AGG_METHOD,\n` +
-        `                        temporal_freq=TEMPORAL_FREQ,\n` +
-        `                        output_csv=output_csv)\n` +
-        `print(f"   ✅ {len(df):,} rows saved to {output_csv}")\n` +
-        `df.head(10)`
-      ),
     ], `CDH — Cube Processor — ${p.country} ${p.y0}–${p.y1}`);
   }
 
-  // ── SKILL 3: Plots ──
+  // ── SKILL 3: Plots ───────────────────────────────────────────────
   function buildPlotsNotebook(p) {
+    const precipVar = p.vars.includes('precipitation') ? 'precipitation' : p.vars[0];
+    const tempVar   = p.vars.includes('tmax') ? '"tmax"' : 'None';
+
+    const apiDocs = `from cdh.plots import (plot_time_series, plot_spatial_map,
+                       plot_seasonal_pattern, plot_admin_comparison)
+
+plot_time_series(df, variable, title="") → plotly Figure
+  Input: DataFrame from summarize_by_admin (cols: admin_unit, variable, time, value)
+  Output: Line chart — one line per admin unit, one subplot per variable
+
+plot_spatial_map(ds, variable, time=None, title="") → plotly Figure
+  Input: xarray Dataset (the masked cube)
+  Output: Interactive heatmap — if time=None shows mean over all time steps
+
+plot_seasonal_pattern(df, precip_var, temp_var=None, title="") → plotly Figure
+  Output: Bar chart for precipitation + line for temperature (dual axis)
+
+plot_admin_comparison(df, variable, year, agg="mean", title="") → plotly Figure
+  Output: Horizontal bar chart sorted by value for the given year
+
+All functions return Plotly Figure objects — call .show() to display them.`;
+
+    const params = `COUNTRY      = "${p.country}"
+COUNTRY_ISO3 = "${p.iso3}"
+WORK_DIR     = "/content/cdh_${p.iso3}"
+PRECIP_VAR   = "${precipVar}"
+TEMP_VAR     = ${tempVar}`;
+
+    const task = `Generate complete ready-to-run Python code that:
+1. Loads the summary CSV from WORK_DIR (glob for *_summary.csv) into a DataFrame df
+   (parse 'time' column as datetime)
+2. Loads the cube NetCDF from WORK_DIR (*_cube.nc) into an xarray Dataset ds_cube
+3. If any file is missing, prints a clear warning and skips that chart
+4. Generates and displays these 4 charts (call .show() on each):
+   a. plot_time_series(df, variable=PRECIP_VAR) — monthly time series by admin unit
+   b. plot_seasonal_pattern(df, precip_var=PRECIP_VAR, temp_var=TEMP_VAR) — climatology
+   c. plot_admin_comparison(df, variable=PRECIP_VAR, year=df['time'].dt.year.max())
+   d. plot_spatial_map(ds_cube.mean('time'), variable=PRECIP_VAR) — mean spatial map
+5. Each chart should have a descriptive title including COUNTRY`;
+
     return notebookShell([
       makeCell([
         `# 📊 CDH Skill — Notebook Plots`,
         `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
         ``,
-        `| Parameter | Value |`,`|---|---|`,
+        `Skill: \`notebook-plots\``,
+        ``,
+        `| Parameter | Value |`,
+        `|---|---|`,
         `| Country | **${p.country}** (${p.iso3}) |`,
-        `| Variables | **${p.vars.join(', ')}** |`
+        `| Precip variable | **${precipVar}** |`,
+        `| Temp variable | **${p.vars.includes('tmax') ? 'tmax' : 'none'}** |`,
+        ``,
+        `**Steps:** Run Cell 1 → Cell 2 → then in Cell 3 click ✨ Gemini → Generate → Run`
       ].join('\n'), 'markdown'),
 
       makeCell(
         `# Cell 1 — Install\n` +
         `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git plotly hvplot\n` +
-        `print('✅ Ready')`
+        `print("✅ Ready")`
       ),
 
       makeCell(
@@ -1425,60 +1500,85 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
         `COUNTRY      = "${p.country}"\n` +
         `COUNTRY_ISO3 = "${p.iso3}"\n` +
         `WORK_DIR     = "/content/cdh_${p.iso3}"\n` +
-        `PRECIP_VAR   = "${p.vars.includes('precipitation') ? 'precipitation' : p.vars[0]}"\n` +
-        `TEMP_VAR     = "${p.vars.includes('tmax') ? 'tmax' : 'None'}"\n` +
-        `print(f"📁 Reading data from: {WORK_DIR}")`
+        `PRECIP_VAR   = "${precipVar}"\n` +
+        `TEMP_VAR     = ${tempVar}\n\n` +
+        `print(f"📍 {p.country} | precip: ${precipVar} | temp: ${p.vars.includes('tmax') ? 'tmax' : 'none'}")\n` +
+        `print("✅ Parameters loaded — proceed to Cell 3")`
       ),
 
-      makeCell(
-        `# Cell 3 — Load summary CSV\n` +
-        `import pandas as pd, glob\n\n` +
-        `csv_files = glob.glob(f"{WORK_DIR}/*_summary.csv")\n` +
-        `if not csv_files:\n` +
-        `    print("⚠️  No summary CSV found. Run the Geospatial Cube Processor skill first.")\n` +
-        `else:\n` +
-        `    df = pd.read_csv(csv_files[0], parse_dates=['time'])\n` +
-        `    print(f"✅ Loaded: {csv_files[0]}")\n` +
-        `    print(f"   Shape: {df.shape}  |  Columns: {list(df.columns)}")\n` +
-        `    display(df.head())`
-      ),
+      geminiCell('notebook-plots', apiDocs, params, task),
 
-      makeCell(
-        `# Cell 4 — Time series by admin unit\n` +
-        `from cdh.plots import plot_time_series\n\n` +
-        `fig = plot_time_series(df, variable=PRECIP_VAR,\n` +
-        `                       title=f"Monthly Precipitation — {COUNTRY}")\n` +
-        `fig.show()`
-      ),
-
-      makeCell(
-        `# Cell 5 — Seasonal climatology\n` +
-        `from cdh.plots import plot_seasonal_pattern\n\n` +
-        `fig = plot_seasonal_pattern(df,\n` +
-        `    precip_var=PRECIP_VAR,\n` +
-        `    temp_var=TEMP_VAR if TEMP_VAR != 'None' else None,\n` +
-        `    title=f"Seasonal Climatology — {COUNTRY}")\n` +
-        `fig.show()`
-      ),
-
-      makeCell(
-        `# Cell 6 — Comparison across regions\n` +
-        `from cdh.plots import plot_admin_comparison\n\n` +
-        `fig = plot_admin_comparison(df, variable=PRECIP_VAR,\n` +
-        `    year=df['time'].dt.year.max(),\n` +
-        `    title=f"Precipitation by Region — {COUNTRY}")\n` +
-        `fig.show()`
-      ),
-    ], `CDH — Plots — ${p.country}`);
+    ], `CDH — Plots — ${p.country} ${p.y0}–${p.y1}`);
   }
 
-  // ── FULL PIPELINE ──
+  // ── FULL PIPELINE ────────────────────────────────────────────────
   function buildFullPipelineNotebook(p) {
-    const dlPrecip = p.vars.includes('precipitation');
-    const dlTmax   = p.vars.includes('tmax');
-    const dlTmin   = p.vars.includes('tmin');
-    const dlSolar  = p.vars.includes('solar_rad');
+    const dlPrecip  = p.vars.includes('precipitation');
+    const dlTmax    = p.vars.includes('tmax');
+    const dlTmin    = p.vars.includes('tmin');
+    const dlSolar   = p.vars.includes('solar_rad');
     const adminLabel = ['country','province/state','district'][p.adminLvl];
+    const precipVar  = p.vars.includes('precipitation') ? 'precipitation' : p.vars[0];
+    const tempVar    = p.vars.includes('tmax') ? '"tmax"' : 'None';
+
+    const apiDocs = `STEP 1 — Download:
+  from cdh import fetch_chirps, fetch_chirts, fetch_nasa_power
+  fetch_chirps(country, start_date, end_date) → xr.Dataset  [precipitation]
+  fetch_chirts(country, start_date, end_date, variables=["tmax","tmin"]) → xr.Dataset
+  fetch_nasa_power(country, start_date, end_date, variables=["ALLSKY_SFC_SW_DWN"]) → xr.Dataset
+
+STEP 2 — Process:
+  from cdh.transform  import stack_datasets
+  from cdh.spatial    import mask_to_admin
+  from cdh.summarize  import summarize_by_admin
+  stack_datasets(list_of_datasets, target_resolution="coarsest") → xr.Dataset
+  mask_to_admin(ds, country_iso3, admin_level) → (xr.Dataset, gpd.GeoDataFrame)
+  summarize_by_admin(ds, boundaries, agg_method="mean",
+                     temporal_freq="ME", output_csv=None) → pd.DataFrame
+
+STEP 3 — Visualize:
+  from cdh.plots import (plot_time_series, plot_spatial_map,
+                         plot_seasonal_pattern, plot_admin_comparison)
+  All return plotly Figures — call .show() on each.`;
+
+    const params = `COUNTRY       = "${p.country}"
+COUNTRY_ISO3  = "${p.iso3}"
+ADMIN_LEVEL   = ${p.adminLvl}   # ${adminLabel}
+START_DATE    = "${p.y0}-01-01"
+END_DATE      = "${p.y1}-12-31"
+DOWNLOAD_PRECIP = ${dlPrecip}
+DOWNLOAD_TMAX   = ${dlTmax}
+DOWNLOAD_TMIN   = ${dlTmin}
+DOWNLOAD_SOLAR  = ${dlSolar}
+AGG_METHOD    = "mean"
+TEMPORAL_FREQ = "ME"
+WORK_DIR      = "/content/cdh_${p.iso3}"
+PRECIP_VAR    = "${precipVar}"
+TEMP_VAR      = ${tempVar}`;
+
+    const task = `Generate a SINGLE complete Python script that runs all 3 steps in sequence.
+Use clear print headers before each step:
+  print("\\n=== STEP 1: Downloading climate data ===")
+  print("\\n=== STEP 2: Processing spatial cube ===")
+  print("\\n=== STEP 3: Generating visualizations ===")
+
+STEP 1 — Download only variables where DOWNLOAD_* is True.
+  Save each as NetCDF in WORK_DIR.
+  Progress message before each download.
+
+STEP 2 — Stack all downloaded datasets (if >1), mask to COUNTRY_ISO3 at ADMIN_LEVEL,
+  save cube as WORK_DIR/${p.iso3}_cube.nc,
+  run summarize_by_admin with AGG_METHOD and TEMPORAL_FREQ,
+  save CSV as WORK_DIR/${p.iso3}_summary.csv,
+  display first rows of result DataFrame.
+
+STEP 3 — Generate and show all 4 charts:
+  plot_time_series, plot_seasonal_pattern, plot_admin_comparison,
+  plot_spatial_map (pass ds_cube.mean('time')).
+  Each chart title should include COUNTRY and the date range.
+
+Wrap each step in try/except — print a clear error message if it fails.
+End with a summary listing all files created in WORK_DIR with sizes.`;
 
     return notebookShell([
       makeCell([
@@ -1487,114 +1587,55 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
         ``,
         `\`climate-data-download\` → \`geospatial-cube-processor\` → \`notebook-plots\``,
         ``,
-        `| Parameter | Value |`,`|---|---|`,
+        `| Parameter | Value |`,
+        `|---|---|`,
         `| Country | **${p.country}** (${p.iso3}) |`,
         `| Admin level | **${p.adminLvl}** — ${adminLabel} |`,
         `| Period | **${p.y0}-01-01** → **${p.y1}-12-31** |`,
         `| Variables | **${p.vars.join(', ')}** |`,
         ``,
-        `**Run All** (Runtime → Run all) — no configuration needed.`
+        `**How to run:**`,
+        `1. Run **Cell 1** — installs packages`,
+        `2. Run **Cell 2** — loads your parameters`,
+        `3. In **Cell 3** click the ✨ **Gemini button** → **Generate**`,
+        `4. Review the code and click **▶ Run** — all 3 steps execute automatically`
       ].join('\n'), 'markdown'),
 
       makeCell(
-        `# Cell 1 — Install\n` +
-        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git geopandas rioxarray plotly hvplot\n` +
-        `print('✅ All packages installed')`
+        `# Cell 1 — Install all packages\n` +
+        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git \\\n` +
+        `               geopandas rioxarray plotly hvplot\n` +
+        `print("✅ All packages installed")`
       ),
 
       makeCell(
         `# Cell 2 — Parameters (pre-configured from CDH Skills Hub)\n` +
-        `COUNTRY      = "${p.country}"\n` +
-        `COUNTRY_ISO3 = "${p.iso3}"\n` +
-        `ADMIN_LEVEL  = ${p.adminLvl}\n` +
-        `START_DATE   = "${p.y0}-01-01"\n` +
-        `END_DATE     = "${p.y1}-12-31"\n` +
+        `COUNTRY       = "${p.country}"\n` +
+        `COUNTRY_ISO3  = "${p.iso3}"\n` +
+        `ADMIN_LEVEL   = ${p.adminLvl}\n` +
+        `START_DATE    = "${p.y0}-01-01"\n` +
+        `END_DATE      = "${p.y1}-12-31"\n` +
         `DOWNLOAD_PRECIP = ${dlPrecip}\n` +
         `DOWNLOAD_TMAX   = ${dlTmax}\n` +
         `DOWNLOAD_TMIN   = ${dlTmin}\n` +
         `DOWNLOAD_SOLAR  = ${dlSolar}\n` +
         `AGG_METHOD    = "mean"\n` +
         `TEMPORAL_FREQ = "ME"\n` +
-        `WORK_DIR      = f"/content/cdh_${p.iso3}"\n\n` +
-        `import os\n` +
-        `os.makedirs(WORK_DIR, exist_ok=True)\n` +
-        `print(f"\\n{'='*50}")\n` +
+        `WORK_DIR      = "/content/cdh_${p.iso3}"\n` +
+        `PRECIP_VAR    = "${precipVar}"\n` +
+        `TEMP_VAR      = ${tempVar}\n\n` +
+        `import os; os.makedirs(WORK_DIR, exist_ok=True)\n` +
+        `print(f"{'='*50}")\n` +
         `print(f"  Country:   {COUNTRY} ({COUNTRY_ISO3})")\n` +
-        `print(f"  Admin:     level {ADMIN_LEVEL} ({adminLabel})")\n` +
+        `print(f"  Admin:     level {ADMIN_LEVEL} (${adminLabel})")\n` +
         `print(f"  Period:    {START_DATE} → {END_DATE}")\n` +
         `print(f"  Variables: ${p.vars.join(', ')}")\n` +
-        `print(f"{'='*50}")`
+        `print(f"{'='*50}")\n` +
+        `print("\\n✅ Ready — go to Cell 3 and click ✨ Gemini → Generate")`
       ),
 
-      makeCell(
-        `# Cell 3 — STEP 1: Download climate data\n` +
-        `from cdh import fetch_chirps, fetch_chirts, fetch_nasa_power\n\n` +
-        `print("\\n=== STEP 1: Downloading climate data ===")\n` +
-        `datasets = {}\n\n` +
-        `if DOWNLOAD_PRECIP:\n` +
-        `    print("  🌧️  Precipitation (CHIRPS)...")\n` +
-        `    ds = fetch_chirps(COUNTRY, START_DATE, END_DATE)\n` +
-        `    ds.to_netcdf(f"{WORK_DIR}/chirps_{COUNTRY_ISO3}.nc")\n` +
-        `    datasets['precipitation'] = ds\n\n` +
-        `t_vars = [v for v, d in [("tmax",DOWNLOAD_TMAX),("tmin",DOWNLOAD_TMIN)] if d]\n` +
-        `if t_vars:\n` +
-        `    print(f"  🌡️  {t_vars} (CHIRTS-ERA5)...")\n` +
-        `    ds = fetch_chirts(COUNTRY, START_DATE, END_DATE, variables=t_vars)\n` +
-        `    ds.to_netcdf(f"{WORK_DIR}/chirts_{COUNTRY_ISO3}.nc")\n` +
-        `    for v in t_vars: datasets[v] = ds\n\n` +
-        `if DOWNLOAD_SOLAR:\n` +
-        `    print("  ☀️  Solar radiation (NASA POWER)...")\n` +
-        `    ds = fetch_nasa_power(COUNTRY, START_DATE, END_DATE, variables=["ALLSKY_SFC_SW_DWN"])\n` +
-        `    ds.to_netcdf(f"{WORK_DIR}/nasa_power_{COUNTRY_ISO3}.nc")\n` +
-        `    datasets['solar_rad'] = ds\n\n` +
-        `print(f"  ✅ Downloaded: {list(datasets.keys())}")`
-      ),
+      geminiCell('CDH Full Pipeline', apiDocs, params, task),
 
-      makeCell(
-        `# Cell 4 — STEP 2: Process into spatial cube\n` +
-        `from cdh.transform  import stack_datasets\n` +
-        `from cdh.spatial    import mask_to_admin\n` +
-        `from cdh.summarize  import summarize_by_admin\n\n` +
-        `print("\\n=== STEP 2: Processing spatial cube ===")\n\n` +
-        `ds_list = list(datasets.values())\n` +
-        `cube = stack_datasets(ds_list, target_resolution="coarsest") if len(ds_list)>1 else ds_list[0]\n` +
-        `print(f"  🔗 Stacked {len(ds_list)} dataset(s)")\n\n` +
-        `cube_masked, boundaries = mask_to_admin(cube, COUNTRY_ISO3, admin_level=ADMIN_LEVEL)\n` +
-        `cube_masked.to_netcdf(f"{WORK_DIR}/{COUNTRY_ISO3}_cube.nc")\n` +
-        `print(f"  ✂️  Masked to {COUNTRY} admin level {ADMIN_LEVEL}")\n\n` +
-        `output_csv = f"{WORK_DIR}/{COUNTRY_ISO3}_summary.csv"\n` +
-        `df = summarize_by_admin(cube_masked, boundaries,\n` +
-        `                        agg_method=AGG_METHOD,\n` +
-        `                        temporal_freq=TEMPORAL_FREQ,\n` +
-        `                        output_csv=output_csv)\n` +
-        `print(f"  📊 Summary: {len(df):,} rows — {df['admin_unit'].nunique()} admin units")\n` +
-        `display(df.head())`
-      ),
-
-      makeCell(
-        `# Cell 5 — STEP 3: Visualize results\n` +
-        `from cdh.plots import (plot_time_series, plot_spatial_map,\n` +
-        `                       plot_seasonal_pattern, plot_admin_comparison)\n\n` +
-        `print("\\n=== STEP 3: Generating visualizations ===")\n\n` +
-        `PRECIP_VAR = "${p.vars.includes('precipitation') ? 'precipitation' : p.vars[0]}"\n` +
-        `TEMP_VAR   = ${p.vars.includes('tmax') ? '"tmax"' : 'None'}\n\n` +
-        `# Time series\n` +
-        `plot_time_series(df, variable=PRECIP_VAR,\n` +
-        `    title=f"Monthly Precipitation — {COUNTRY}").show()\n\n` +
-        `# Seasonal climatology\n` +
-        `plot_seasonal_pattern(df, precip_var=PRECIP_VAR, temp_var=TEMP_VAR,\n` +
-        `    title=f"Seasonal Climatology — {COUNTRY}").show()\n\n` +
-        `# Regional comparison\n` +
-        `plot_admin_comparison(df, variable=PRECIP_VAR,\n` +
-        `    year=df['time'].dt.year.max(),\n` +
-        `    title=f"Precipitation by Region — {COUNTRY}").show()\n\n` +
-        `# Spatial map (mean)\n` +
-        `import xarray as xr\n` +
-        `cube_mean = xr.open_dataset(f"{WORK_DIR}/{COUNTRY_ISO3}_cube.nc").mean('time')\n` +
-        `plot_spatial_map(cube_mean, variable=PRECIP_VAR,\n` +
-        `    title=f"Mean Precipitation — {COUNTRY} {START_DATE[:4]}–{END_DATE[:4]}").show()\n\n` +
-        `print("\\n✅ Pipeline complete!")`
-      ),
     ], `CDH — Full Pipeline — ${p.country} ${p.y0}–${p.y1}`);
   }
 
