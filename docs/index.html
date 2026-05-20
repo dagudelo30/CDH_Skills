@@ -1075,77 +1075,17 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
     <div class="modal-header">
       <div>
         <div class="modal-title" id="modal-title">Configure skill</div>
-        <div class="modal-subtitle" id="modal-subtitle">Set your parameters — Claude will personalize the notebook</div>
+        <div class="modal-subtitle" id="modal-subtitle">Parameters injected directly into the notebook</div>
       </div>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
     </div>
-    <div class="modal-body">
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="country">Country / Region</label>
-          <select class="form-select" id="country" onchange="updatePrompt()">
-            <option value="">Select country...</option>
-            <option>Ethiopia</option>
-            <option>Kenya</option>
-            <option>Honduras</option>
-            <option>Colombia</option>
-            <option>Ghana</option>
-            <option>Nigeria</option>
-            <option>India</option>
-            <option>Bangladesh</option>
-            <option>Custom (type below)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="admin-level">Admin level</label>
-          <select class="form-select" id="admin-level" onchange="updatePrompt()">
-            <option value="0">Country (level 0)</option>
-            <option value="1">Province / State (level 1)</option>
-            <option value="2">District (level 2)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label" for="year-start">Start year</label>
-          <input class="form-input" type="number" id="year-start" min="1981" max="2024" value="2015" oninput="updatePrompt()">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="year-end">End year</label>
-          <input class="form-input" type="number" id="year-end" min="1981" max="2024" value="2022" oninput="updatePrompt()">
-        </div>
-      </div>
-
-      <div class="form-group" id="vars-group">
-        <label class="form-label">Variables</label>
-        <div style="display:flex; flex-wrap:wrap; gap:8px;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="var-precip" checked onchange="updatePrompt()"> Precipitation
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="var-tmax" onchange="updatePrompt()"> Tmax
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="var-tmin" onchange="updatePrompt()"> Tmin
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
-            <input type="checkbox" id="var-solar" onchange="updatePrompt()"> Solar radiation
-          </label>
-        </div>
-      </div>
-
-      <div class="modal-preview">
-        <span class="prompt-label">Claude system prompt (pre-loaded in Colab)</span>
-        <div id="prompt-preview" class="prompt-text"></div>
-      </div>
-
+    <div class="modal-body" id="modal-body">
+      <!-- Rendered dynamically per skill by renderForm() -->
     </div>
     <div class="modal-footer">
-      <button class="btn-colab btn-colab-primary" style="flex:1" id="launch-btn" onclick="launchColab()">
+      <button class="btn-colab btn-colab-primary" style="flex:1" onclick="launchColab()">
         <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
-        Launch in Colab
+        Open in Colab
       </button>
       <button class="btn-colab btn-colab-secondary" style="flex:0 0 auto" onclick="closeModal()">Cancel</button>
     </div>
@@ -1153,520 +1093,276 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
 </div>
 
 <script>
-  // ─── Config ──────────────────────────────────────────────────────
-  const GITHUB_USER = 'dagudelo30';
-  const REPO_NAME   = 'CDH_Skills';
+  const GH   = 'dagudelo30';
+  const REPO = 'CDH_Skills';
+  const NB_BASE = `https://colab.research.google.com/github/${GH}/${REPO}/blob/main/cdh/notebooks`;
 
   const ISO3 = {
     'Ethiopia':'ETH','Kenya':'KEN','Honduras':'HND','Colombia':'COL',
-    'Ghana':'GHA','Nigeria':'NGA','India':'IND','Bangladesh':'BGD'
+    'Ghana':'GHA','Nigeria':'NGA','India':'IND','Bangladesh':'BGD',
+    'Uganda':'UGA','Tanzania':'TZA','Malawi':'MWI','Zambia':'ZMB',
+    'Mali':'MLI','Senegal':'SEN','Niger':'NER','Burkina Faso':'BFA',
   };
 
-  const skillConfig = {
-    download:  { title: 'Climate data download',     subtitle: 'climate-data-download skill' },
-    processor: { title: 'Geospatial cube processor', subtitle: 'geospatial-cube-processor skill' },
-    plots:     { title: 'Notebook plots',            subtitle: 'notebook-plots skill' },
-    full:      { title: 'Full pipeline',             subtitle: 'Download → process → visualize' },
+  // ── Per-skill form definitions ────────────────────────────────────
+  // Each skill declares exactly the fields it needs.
+  // 'id' matches the URL query param key the notebook reads.
+
+  const SKILL_FORMS = {
+    download: {
+      title: 'Climate Data Download',
+      subtitle: 'climate-data-download',
+      notebook: 'climate_data_download.ipynb',
+      fields: [
+        { type:'country', id:'country', label:'Country / Region' },
+        { type:'row', fields:[
+          { type:'number', id:'start', label:'Start year', min:1981, max:2024, val:2015 },
+          { type:'number', id:'end',   label:'End year',   min:1981, max:2024, val:2022 },
+        ]},
+        { type:'checkboxes', label:'Variables to download', options:[
+          { id:'precip', label:'Precipitation (CHIRPS)', checked:true },
+          { id:'tmax',   label:'Tmax (CHIRTS-ERA5)',     checked:false },
+          { id:'tmin',   label:'Tmin (CHIRTS-ERA5)',     checked:false },
+          { id:'solar',  label:'Solar radiation (NASA POWER)', checked:false },
+        ]},
+      ],
+    },
+    processor: {
+      title: 'Geospatial Cube Processor',
+      subtitle: 'geospatial-cube-processor',
+      notebook: 'geospatial_cube_processor.ipynb',
+      fields: [
+        { type:'country', id:'country', label:'Country / Region' },
+        { type:'row', fields:[
+          { type:'number', id:'start', label:'Start year', min:1981, max:2024, val:2015 },
+          { type:'number', id:'end',   label:'End year',   min:1981, max:2024, val:2022 },
+        ]},
+        { type:'select', id:'admin', label:'Administrative level', options:[
+          { val:'0', label:'Country (level 0)' },
+          { val:'1', label:'Province / State (level 1)', selected:true },
+          { val:'2', label:'District (level 2)' },
+        ]},
+        { type:'row', fields:[
+          { type:'select', id:'agg', label:'Aggregation method', options:[
+            { val:'mean', label:'Mean', selected:true },
+            { val:'sum',  label:'Sum' },
+            { val:'max',  label:'Max' },
+            { val:'min',  label:'Min' },
+          ]},
+          { type:'select', id:'freq', label:'Temporal frequency', options:[
+            { val:'ME', label:'Monthly', selected:true },
+            { val:'QE', label:'Quarterly' },
+            { val:'YE', label:'Yearly' },
+          ]},
+        ]},
+      ],
+    },
+    plots: {
+      title: 'Notebook Plots',
+      subtitle: 'notebook-plots',
+      notebook: 'notebook_plots.ipynb',
+      fields: [
+        { type:'country', id:'country', label:'Country / Region' },
+        { type:'row', fields:[
+          { type:'number', id:'start', label:'Start year', min:1981, max:2024, val:2015 },
+          { type:'number', id:'end',   label:'End year',   min:1981, max:2024, val:2022 },
+        ]},
+        { type:'row', fields:[
+          { type:'select', id:'precip_var', label:'Precipitation variable', options:[
+            { val:'precipitation', label:'precipitation', selected:true },
+            { val:'tmin', label:'tmin' },
+          ]},
+          { type:'select', id:'temp_var', label:'Temperature variable', options:[
+            { val:'tmax', label:'tmax', selected:true },
+            { val:'tmin', label:'tmin' },
+            { val:'None', label:'None' },
+          ]},
+        ]},
+        { type:'number', id:'year', label:'Year for regional comparison', min:1981, max:2024, val:2020 },
+        { type:'checkboxes', label:'Charts to generate', options:[
+          { id:'ts',         label:'Time series',           checked:true },
+          { id:'seasonal',   label:'Seasonal climatology',  checked:true },
+          { id:'comparison', label:'Regional comparison',   checked:true },
+          { id:'map',        label:'Spatial map',           checked:true },
+        ]},
+      ],
+    },
+    full: {
+      title: 'Full Pipeline',
+      subtitle: 'download → process → visualize',
+      notebook: 'full_pipeline.ipynb',
+      fields: [
+        { type:'country', id:'country', label:'Country / Region' },
+        { type:'row', fields:[
+          { type:'number', id:'start', label:'Start year', min:1981, max:2024, val:2015 },
+          { type:'number', id:'end',   label:'End year',   min:1981, max:2024, val:2022 },
+        ]},
+        { type:'checkboxes', label:'Variables', options:[
+          { id:'precip', label:'Precipitation', checked:true },
+          { id:'tmax',   label:'Tmax',          checked:false },
+          { id:'tmin',   label:'Tmin',          checked:false },
+          { id:'solar',  label:'Solar rad.',    checked:false },
+        ]},
+        { type:'row', fields:[
+          { type:'select', id:'admin', label:'Admin level', options:[
+            { val:'0', label:'Country' },
+            { val:'1', label:'Province', selected:true },
+            { val:'2', label:'District' },
+          ]},
+          { type:'select', id:'agg', label:'Aggregation', options:[
+            { val:'mean', label:'Mean', selected:true },
+            { val:'sum',  label:'Sum'  },
+            { val:'max',  label:'Max'  },
+          ]},
+          { type:'select', id:'freq', label:'Frequency', options:[
+            { val:'ME', label:'Monthly',   selected:true },
+            { val:'QE', label:'Quarterly' },
+            { val:'YE', label:'Yearly'    },
+          ]},
+        ]},
+      ],
+    },
   };
 
   let currentSkill = 'download';
 
-  // ─── Modal open/close ────────────────────────────────────────────
+  // ── Render form dynamically ───────────────────────────────────────
+  function renderForm(skill) {
+    const cfg  = SKILL_FORMS[skill];
+    const body = document.getElementById('modal-body');
+    body.innerHTML = cfg.fields.map(renderField).join('') + `
+      <div class="modal-preview" style="margin-top:16px">
+        <span class="prompt-label">Notebook URL preview</span>
+        <div id="url-preview" class="prompt-text" style="word-break:break-all;font-size:11px"></div>
+      </div>`;
+    body.querySelectorAll('input,select').forEach(el => el.addEventListener('change', updatePreview));
+    body.querySelectorAll('input[type=number]').forEach(el => el.addEventListener('input', updatePreview));
+    updatePreview();
+  }
+
+  function renderField(f) {
+    if (f.type === 'country') {
+      const opts = Object.keys(ISO3).map(c => `<option>${c}</option>`).join('');
+      return `<div class="form-group">
+        <label class="form-label">${f.label}</label>
+        <select class="form-select" id="f_${f.id}">
+          <option value="">Select country...</option>${opts}
+        </select>
+      </div>`;
+    }
+    if (f.type === 'row') {
+      return `<div class="form-row">${f.fields.map(renderField).join('')}</div>`;
+    }
+    if (f.type === 'number') {
+      return `<div class="form-group">
+        <label class="form-label">${f.label}</label>
+        <input class="form-input" type="number" id="f_${f.id}" min="${f.min}" max="${f.max}" value="${f.val}">
+      </div>`;
+    }
+    if (f.type === 'select') {
+      const opts = f.options.map(o =>
+        `<option value="${o.val}"${o.selected?' selected':''}>${o.label}</option>`).join('');
+      return `<div class="form-group">
+        <label class="form-label">${f.label}</label>
+        <select class="form-select" id="f_${f.id}">${opts}</select>
+      </div>`;
+    }
+    if (f.type === 'checkboxes') {
+      const checks = f.options.map(o => `
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="f_${o.id}"${o.checked?' checked':''}> ${o.label}
+        </label>`).join('');
+      return `<div class="form-group">
+        <label class="form-label">${f.label}</label>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:4px">${checks}</div>
+      </div>`;
+    }
+    return '';
+  }
+
+  // ── Read all form values and build query string ───────────────────
+  function getQueryParams() {
+    const params = {};
+    const body   = document.getElementById('modal-body');
+    if (!body) return params;
+
+    body.querySelectorAll('[id^="f_"]').forEach(el => {
+      const key = el.id.replace('f_', '');
+      if (el.type === 'checkbox') {
+        params[key] = el.checked ? 'true' : 'false';
+      } else {
+        params[key] = el.value;
+      }
+    });
+
+    // Derive iso3 from country
+    const country = params['country'] || '';
+    params['iso3'] = ISO3[country] || country.slice(0,3).toUpperCase() || 'ETH';
+
+    // Derive start/end as full dates
+    if (params['start']) params['start'] = params['start'] + '-01-01';
+    if (params['end'])   params['end']   = params['end']   + '-12-31';
+
+    return params;
+  }
+
+  function buildColabUrl() {
+    const cfg    = SKILL_FORMS[currentSkill];
+    const params = getQueryParams();
+    const qs     = Object.entries(params)
+      .filter(([,v]) => v !== '')
+      .map(([k,v]) => `${k}=${encodeURIComponent(v)}`)
+      .join('&');
+    return `${NB_BASE}/${cfg.notebook}?${qs}`;
+  }
+
+  function updatePreview() {
+    const el = document.getElementById('url-preview');
+    if (el) el.textContent = buildColabUrl();
+  }
+
+  // ── Modal open/close ──────────────────────────────────────────────
   function openModal(skill) {
     currentSkill = skill;
-    const cfg = skillConfig[skill];
+    const cfg = SKILL_FORMS[skill];
     document.getElementById('modal-title').textContent    = cfg.title;
     document.getElementById('modal-subtitle').textContent = cfg.subtitle;
     document.getElementById('modal').classList.add('open');
-    updatePreview();
+    renderForm(skill);
   }
+
   function closeModal() { document.getElementById('modal').classList.remove('open'); }
   function closeOnBackdrop(e) { if (e.target === document.getElementById('modal')) closeModal(); }
 
-  // ─── Read form values ────────────────────────────────────────────
-  function getParams() {
-    const country   = document.getElementById('country').value || 'Ethiopia';
-    const adminLvl  = document.getElementById('admin-level').value;
-    const y0        = document.getElementById('year-start').value || '2015';
-    const y1        = document.getElementById('year-end').value   || '2022';
-    const iso3      = ISO3[country] || country.slice(0,3).toUpperCase();
-    const vars = [];
-    if (document.getElementById('var-precip').checked) vars.push('precipitation');
-    if (document.getElementById('var-tmax').checked)   vars.push('tmax');
-    if (document.getElementById('var-tmin').checked)   vars.push('tmin');
-    if (document.getElementById('var-solar').checked)  vars.push('solar_rad');
-    return { country, iso3, adminLvl: parseInt(adminLvl), y0, y1,
-             vars: vars.length ? vars : ['precipitation'] };
-  }
-
-  // ─── Live preview ────────────────────────────────────────────────
-  function updatePreview() {
-    const p = getParams();
-    const adminLabel = ['country','province/state','district'][p.adminLvl] || 'country';
-    document.getElementById('prompt-preview').innerHTML =
-      `<span class="prompt-highlight">• Country:</span>  ${p.country} (${p.iso3})<br>` +
-      `<span class="prompt-highlight">• Admin:</span>    level ${p.adminLvl} — ${adminLabel}<br>` +
-      `<span class="prompt-highlight">• Period:</span>   ${p.y0}-01-01 → ${p.y1}-12-31<br>` +
-      `<span class="prompt-highlight">• Variables:</span> ${p.vars.join(', ')}`;
-  }
-
-  // ─── Notebook builders ───────────────────────────────────────────
-  // Each builder returns a full .ipynb object (JSON) with parameters
-  // already written into the code cells — no API key, no AI at runtime.
-
-  function makeCell(source, cellType='code') {
-    const lines = source.split('\n').map((l,i,a) => i<a.length-1 ? l+'\n' : l);
-    if (cellType === 'markdown') return {
-      cell_type:'markdown', metadata:{}, source: lines
-    };
-    return {
-      cell_type:'code', execution_count:null, metadata:{}, outputs:[], source: lines
-    };
-  }
-
-  function notebookShell(cells, title) {
-    return {
-      nbformat:4, nbformat_minor:5,
-      metadata:{
-        kernelspec:{display_name:'Python 3',language:'python',name:'python3'},
-        language_info:{name:'python',version:'3.10.0'},
-        colab:{provenance:[],name:title}
-      },
-      cells
-    };
-  }
-
-  // ── Shared: Gemini prompt builder ───────────────────────────────
-  // Returns a code cell whose comment block IS the Gemini prompt.
-  // When the user clicks ✨ in Colab, Gemini reads it and generates code.
-
-  function geminiCell(skillName, apiDocs, params, task) {
-    const header = `# ${'='.repeat(60)}
-# CDH SKILL: ${skillName}
-# Repository: https://github.com/${GITHUB_USER}/${REPO_NAME}
-# ${'='.repeat(60)}
-#
-# SKILL DESCRIPTION & API:
-${apiDocs.split('\n').map(l => '# ' + l).join('\n')}
-#
-# USER PARAMETERS (already defined above — do not redefine):
-${params.split('\n').map(l => '#   ' + l).join('\n')}
-#
-# YOUR TASK:
-${task.split('\n').map(l => '# ' + l).join('\n')}
-# ${'='.repeat(60)}
-
-# ✨ Click the Gemini button (stars icon, top-right of this cell) → Generate
-# Gemini will read the skill description above and write the full code here.
-# Then click ▶ Run to execute.`;
-    return makeCell(header);
-  }
-
-  // ── SKILL 1: Download ────────────────────────────────────────────
-  function buildDownloadNotebook(p) {
-    const dlPrecip = p.vars.includes('precipitation');
-    const dlTmax   = p.vars.includes('tmax');
-    const dlTmin   = p.vars.includes('tmin');
-    const dlSolar  = p.vars.includes('solar_rad');
-
-    const apiDocs = `fetch_chirps(country, start_date, end_date) → xr.Dataset
-  Downloads daily precipitation from CHIRPS (0.05°, 1981–present)
-fetch_chirts(country, start_date, end_date, variables=["tmax","tmin"]) → xr.Dataset
-  Downloads daily Tmax/Tmin from CHIRTS-ERA5
-fetch_nasa_power(country, start_date, end_date, variables=["ALLSKY_SFC_SW_DWN"]) → xr.Dataset
-  Downloads solar radiation or humidity from NASA POWER (S3 Zarr)
-All functions are imported from the cdh package.
-All return CF-compliant xarray Datasets.`;
-
-    const params = `COUNTRY      = "${p.country}"
-COUNTRY_ISO3 = "${p.iso3}"
-START_DATE   = "${p.y0}-01-01"
-END_DATE     = "${p.y1}-12-31"
-WORK_DIR     = "/content/cdh_${p.iso3}"
-DOWNLOAD_PRECIP = ${dlPrecip}
-DOWNLOAD_TMAX   = ${dlTmax}
-DOWNLOAD_TMIN   = ${dlTmin}
-DOWNLOAD_SOLAR  = ${dlSolar}`;
-
-    const task = `Generate complete ready-to-run Python code that:
-1. Imports fetch_chirps, fetch_chirts, fetch_nasa_power from cdh
-2. For each variable where DOWNLOAD_* is True, calls the correct function
-   and saves the result as NetCDF in WORK_DIR:
-     precipitation → chirps_${p.iso3}.nc
-     tmax/tmin     → chirts_${p.iso3}.nc
-     solar_rad     → nasa_power_${p.iso3}.nc
-3. Prints a progress message before each download
-4. After all downloads, lists all .nc files in WORK_DIR with their
-   variable names, time range, and file size in MB`;
-
-    return notebookShell([
-      makeCell([
-        `# 🌧️ CDH Skill — Climate Data Download`,
-        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
-        ``,
-        `Skill: \`climate-data-download\``,
-        ``,
-        `| Parameter | Value |`,
-        `|---|---|`,
-        `| Country | **${p.country}** (${p.iso3}) |`,
-        `| Period | **${p.y0}-01-01** → **${p.y1}-12-31** |`,
-        `| Variables | **${p.vars.join(', ')}** |`,
-        ``,
-        `**Steps:** Run Cell 1 → Cell 2 → then in Cell 3 click ✨ Gemini → Generate → Run`
-      ].join('\n'), 'markdown'),
-
-      makeCell(
-        `# Cell 1 — Install CDH package\n` +
-        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git\n` +
-        `print("✅ CDH package ready")`
-      ),
-
-      makeCell(
-        `# Cell 2 — Parameters (pre-configured from CDH Skills Hub)\n` +
-        `COUNTRY      = "${p.country}"\n` +
-        `COUNTRY_ISO3 = "${p.iso3}"\n` +
-        `START_DATE   = "${p.y0}-01-01"\n` +
-        `END_DATE     = "${p.y1}-12-31"\n` +
-        `WORK_DIR     = "/content/cdh_${p.iso3}"\n` +
-        `DOWNLOAD_PRECIP = ${dlPrecip}\n` +
-        `DOWNLOAD_TMAX   = ${dlTmax}\n` +
-        `DOWNLOAD_TMIN   = ${dlTmin}\n` +
-        `DOWNLOAD_SOLAR  = ${dlSolar}\n\n` +
-        `import os; os.makedirs(WORK_DIR, exist_ok=True)\n` +
-        `print(f"📍 {p.country} ({p.iso3})  |  {p.y0} → {p.y1}  |  vars: ${p.vars.join(', ')}")\n` +
-        `print(f"📁 Work dir: {WORK_DIR}")\n` +
-        `print("✅ Parameters loaded — proceed to Cell 3")`
-      ),
-
-      geminiCell('climate-data-download', apiDocs, params, task),
-
-    ], `CDH — Climate Data Download — ${p.country} ${p.y0}–${p.y1}`);
-  }
-
-  // ── SKILL 2: Processor ───────────────────────────────────────────
-  function buildProcessorNotebook(p) {
-    const adminLabel = ['country','province/state','district'][p.adminLvl];
-
-    const apiDocs = `from cdh.transform  import stack_datasets
-from cdh.spatial    import mask_to_admin
-from cdh.summarize  import summarize_by_admin
-
-stack_datasets(list_of_xr_datasets, target_resolution="coarsest",
-               resampling_method="bilinear") → xr.Dataset
-  Reprojects and merges multiple datasets onto a common grid.
-  target_resolution: "coarsest", "finest", or degrees (e.g. 0.05)
-
-mask_to_admin(ds, country_iso3, admin_level=0) → (xr.Dataset, gpd.GeoDataFrame)
-  Clips dataset to GADM v4.1 administrative boundary.
-  Returns (clipped_dataset, boundaries_geodataframe).
-  admin_level: 0=country, 1=province/state, 2=district
-
-summarize_by_admin(ds, boundaries, agg_method="mean",
-                   temporal_freq=None, output_csv=None) → pd.DataFrame
-  Computes per-admin-unit statistics.
-  temporal_freq: "ME"=monthly, "QE"=quarterly, "YE"=yearly
-  Returns DataFrame with columns: admin_unit, variable, time, value`;
-
-    const params = `COUNTRY       = "${p.country}"
-COUNTRY_ISO3  = "${p.iso3}"
-ADMIN_LEVEL   = ${p.adminLvl}   # ${adminLabel}
-START_DATE    = "${p.y0}-01-01"
-END_DATE      = "${p.y1}-12-31"
-WORK_DIR      = "/content/cdh_${p.iso3}"
-AGG_METHOD    = "mean"
-TEMPORAL_FREQ = "ME"`;
-
-    const task = `Generate complete ready-to-run Python code that:
-1. Loads all .nc files from WORK_DIR into a list of xarray Datasets
-   (print which files were found)
-2. If more than 1 dataset: stacks them with stack_datasets(datasets, "coarsest")
-   If only 1: use it directly as the cube
-3. Clips to admin boundary:
-   cube_masked, boundaries = mask_to_admin(cube, COUNTRY_ISO3, ADMIN_LEVEL)
-4. Saves cube_masked to WORK_DIR/${p.iso3}_cube.nc
-5. Summarizes with summarize_by_admin using AGG_METHOD and TEMPORAL_FREQ,
-   saves CSV to WORK_DIR/${p.iso3}_admin${p.adminLvl}_summary.csv
-6. Prints: number of admin units found, total rows in CSV,
-   and displays the first 10 rows of the DataFrame`;
-
-    return notebookShell([
-      makeCell([
-        `# 🗺️ CDH Skill — Geospatial Cube Processor`,
-        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
-        ``,
-        `Skill: \`geospatial-cube-processor\``,
-        ``,
-        `| Parameter | Value |`,
-        `|---|---|`,
-        `| Country | **${p.country}** (${p.iso3}) |`,
-        `| Admin level | **${p.adminLvl}** — ${adminLabel} |`,
-        `| Aggregation | mean / monthly |`,
-        ``,
-        `**Steps:** Run Cell 1 → Cell 2 → then in Cell 3 click ✨ Gemini → Generate → Run`
-      ].join('\n'), 'markdown'),
-
-      makeCell(
-        `# Cell 1 — Install\n` +
-        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git geopandas rioxarray\n` +
-        `print("✅ Ready")`
-      ),
-
-      makeCell(
-        `# Cell 2 — Parameters (pre-configured)\n` +
-        `COUNTRY       = "${p.country}"\n` +
-        `COUNTRY_ISO3  = "${p.iso3}"\n` +
-        `ADMIN_LEVEL   = ${p.adminLvl}\n` +
-        `START_DATE    = "${p.y0}-01-01"\n` +
-        `END_DATE      = "${p.y1}-12-31"\n` +
-        `WORK_DIR      = "/content/cdh_${p.iso3}"\n` +
-        `AGG_METHOD    = "mean"\n` +
-        `TEMPORAL_FREQ = "ME"\n\n` +
-        `import os; os.makedirs(WORK_DIR, exist_ok=True)\n` +
-        `print(f"📍 {p.country} ({p.iso3}) — admin level ${p.adminLvl} (${adminLabel})")\n` +
-        `print("✅ Parameters loaded — proceed to Cell 3")`
-      ),
-
-      geminiCell('geospatial-cube-processor', apiDocs, params, task),
-
-    ], `CDH — Cube Processor — ${p.country} ${p.y0}–${p.y1}`);
-  }
-
-  // ── SKILL 3: Plots ───────────────────────────────────────────────
-  function buildPlotsNotebook(p) {
-    const precipVar = p.vars.includes('precipitation') ? 'precipitation' : p.vars[0];
-    const tempVar   = p.vars.includes('tmax') ? '"tmax"' : 'None';
-
-    const apiDocs = `from cdh.plots import (plot_time_series, plot_spatial_map,
-                       plot_seasonal_pattern, plot_admin_comparison)
-
-plot_time_series(df, variable, title="") → plotly Figure
-  Input: DataFrame from summarize_by_admin (cols: admin_unit, variable, time, value)
-  Output: Line chart — one line per admin unit, one subplot per variable
-
-plot_spatial_map(ds, variable, time=None, title="") → plotly Figure
-  Input: xarray Dataset (the masked cube)
-  Output: Interactive heatmap — if time=None shows mean over all time steps
-
-plot_seasonal_pattern(df, precip_var, temp_var=None, title="") → plotly Figure
-  Output: Bar chart for precipitation + line for temperature (dual axis)
-
-plot_admin_comparison(df, variable, year, agg="mean", title="") → plotly Figure
-  Output: Horizontal bar chart sorted by value for the given year
-
-All functions return Plotly Figure objects — call .show() to display them.`;
-
-    const params = `COUNTRY      = "${p.country}"
-COUNTRY_ISO3 = "${p.iso3}"
-WORK_DIR     = "/content/cdh_${p.iso3}"
-PRECIP_VAR   = "${precipVar}"
-TEMP_VAR     = ${tempVar}`;
-
-    const task = `Generate complete ready-to-run Python code that:
-1. Loads the summary CSV from WORK_DIR (glob for *_summary.csv) into a DataFrame df
-   (parse 'time' column as datetime)
-2. Loads the cube NetCDF from WORK_DIR (*_cube.nc) into an xarray Dataset ds_cube
-3. If any file is missing, prints a clear warning and skips that chart
-4. Generates and displays these 4 charts (call .show() on each):
-   a. plot_time_series(df, variable=PRECIP_VAR) — monthly time series by admin unit
-   b. plot_seasonal_pattern(df, precip_var=PRECIP_VAR, temp_var=TEMP_VAR) — climatology
-   c. plot_admin_comparison(df, variable=PRECIP_VAR, year=df['time'].dt.year.max())
-   d. plot_spatial_map(ds_cube.mean('time'), variable=PRECIP_VAR) — mean spatial map
-5. Each chart should have a descriptive title including COUNTRY`;
-
-    return notebookShell([
-      makeCell([
-        `# 📊 CDH Skill — Notebook Plots`,
-        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
-        ``,
-        `Skill: \`notebook-plots\``,
-        ``,
-        `| Parameter | Value |`,
-        `|---|---|`,
-        `| Country | **${p.country}** (${p.iso3}) |`,
-        `| Precip variable | **${precipVar}** |`,
-        `| Temp variable | **${p.vars.includes('tmax') ? 'tmax' : 'none'}** |`,
-        ``,
-        `**Steps:** Run Cell 1 → Cell 2 → then in Cell 3 click ✨ Gemini → Generate → Run`
-      ].join('\n'), 'markdown'),
-
-      makeCell(
-        `# Cell 1 — Install\n` +
-        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git plotly hvplot\n` +
-        `print("✅ Ready")`
-      ),
-
-      makeCell(
-        `# Cell 2 — Parameters (pre-configured)\n` +
-        `COUNTRY      = "${p.country}"\n` +
-        `COUNTRY_ISO3 = "${p.iso3}"\n` +
-        `WORK_DIR     = "/content/cdh_${p.iso3}"\n` +
-        `PRECIP_VAR   = "${precipVar}"\n` +
-        `TEMP_VAR     = ${tempVar}\n\n` +
-        `print(f"📍 {p.country} | precip: ${precipVar} | temp: ${p.vars.includes('tmax') ? 'tmax' : 'none'}")\n` +
-        `print("✅ Parameters loaded — proceed to Cell 3")`
-      ),
-
-      geminiCell('notebook-plots', apiDocs, params, task),
-
-    ], `CDH — Plots — ${p.country} ${p.y0}–${p.y1}`);
-  }
-
-  // ── FULL PIPELINE ────────────────────────────────────────────────
-  function buildFullPipelineNotebook(p) {
-    const dlPrecip  = p.vars.includes('precipitation');
-    const dlTmax    = p.vars.includes('tmax');
-    const dlTmin    = p.vars.includes('tmin');
-    const dlSolar   = p.vars.includes('solar_rad');
-    const adminLabel = ['country','province/state','district'][p.adminLvl];
-    const precipVar  = p.vars.includes('precipitation') ? 'precipitation' : p.vars[0];
-    const tempVar    = p.vars.includes('tmax') ? '"tmax"' : 'None';
-
-    const apiDocs = `STEP 1 — Download:
-  from cdh import fetch_chirps, fetch_chirts, fetch_nasa_power
-  fetch_chirps(country, start_date, end_date) → xr.Dataset  [precipitation]
-  fetch_chirts(country, start_date, end_date, variables=["tmax","tmin"]) → xr.Dataset
-  fetch_nasa_power(country, start_date, end_date, variables=["ALLSKY_SFC_SW_DWN"]) → xr.Dataset
-
-STEP 2 — Process:
-  from cdh.transform  import stack_datasets
-  from cdh.spatial    import mask_to_admin
-  from cdh.summarize  import summarize_by_admin
-  stack_datasets(list_of_datasets, target_resolution="coarsest") → xr.Dataset
-  mask_to_admin(ds, country_iso3, admin_level) → (xr.Dataset, gpd.GeoDataFrame)
-  summarize_by_admin(ds, boundaries, agg_method="mean",
-                     temporal_freq="ME", output_csv=None) → pd.DataFrame
-
-STEP 3 — Visualize:
-  from cdh.plots import (plot_time_series, plot_spatial_map,
-                         plot_seasonal_pattern, plot_admin_comparison)
-  All return plotly Figures — call .show() on each.`;
-
-    const params = `COUNTRY       = "${p.country}"
-COUNTRY_ISO3  = "${p.iso3}"
-ADMIN_LEVEL   = ${p.adminLvl}   # ${adminLabel}
-START_DATE    = "${p.y0}-01-01"
-END_DATE      = "${p.y1}-12-31"
-DOWNLOAD_PRECIP = ${dlPrecip}
-DOWNLOAD_TMAX   = ${dlTmax}
-DOWNLOAD_TMIN   = ${dlTmin}
-DOWNLOAD_SOLAR  = ${dlSolar}
-AGG_METHOD    = "mean"
-TEMPORAL_FREQ = "ME"
-WORK_DIR      = "/content/cdh_${p.iso3}"
-PRECIP_VAR    = "${precipVar}"
-TEMP_VAR      = ${tempVar}`;
-
-    const task = `Generate a SINGLE complete Python script that runs all 3 steps in sequence.
-Use clear print headers before each step:
-  print("\\n=== STEP 1: Downloading climate data ===")
-  print("\\n=== STEP 2: Processing spatial cube ===")
-  print("\\n=== STEP 3: Generating visualizations ===")
-
-STEP 1 — Download only variables where DOWNLOAD_* is True.
-  Save each as NetCDF in WORK_DIR.
-  Progress message before each download.
-
-STEP 2 — Stack all downloaded datasets (if >1), mask to COUNTRY_ISO3 at ADMIN_LEVEL,
-  save cube as WORK_DIR/${p.iso3}_cube.nc,
-  run summarize_by_admin with AGG_METHOD and TEMPORAL_FREQ,
-  save CSV as WORK_DIR/${p.iso3}_summary.csv,
-  display first rows of result DataFrame.
-
-STEP 3 — Generate and show all 4 charts:
-  plot_time_series, plot_seasonal_pattern, plot_admin_comparison,
-  plot_spatial_map (pass ds_cube.mean('time')).
-  Each chart title should include COUNTRY and the date range.
-
-Wrap each step in try/except — print a clear error message if it fails.
-End with a summary listing all files created in WORK_DIR with sizes.`;
-
-    return notebookShell([
-      makeCell([
-        `# 🌍 CDH Full Pipeline`,
-        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
-        ``,
-        `\`climate-data-download\` → \`geospatial-cube-processor\` → \`notebook-plots\``,
-        ``,
-        `| Parameter | Value |`,
-        `|---|---|`,
-        `| Country | **${p.country}** (${p.iso3}) |`,
-        `| Admin level | **${p.adminLvl}** — ${adminLabel} |`,
-        `| Period | **${p.y0}-01-01** → **${p.y1}-12-31** |`,
-        `| Variables | **${p.vars.join(', ')}** |`,
-        ``,
-        `**How to run:**`,
-        `1. Run **Cell 1** — installs packages`,
-        `2. Run **Cell 2** — loads your parameters`,
-        `3. In **Cell 3** click the ✨ **Gemini button** → **Generate**`,
-        `4. Review the code and click **▶ Run** — all 3 steps execute automatically`
-      ].join('\n'), 'markdown'),
-
-      makeCell(
-        `# Cell 1 — Install all packages\n` +
-        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git \\\n` +
-        `               geopandas rioxarray plotly hvplot\n` +
-        `print("✅ All packages installed")`
-      ),
-
-      makeCell(
-        `# Cell 2 — Parameters (pre-configured from CDH Skills Hub)\n` +
-        `COUNTRY       = "${p.country}"\n` +
-        `COUNTRY_ISO3  = "${p.iso3}"\n` +
-        `ADMIN_LEVEL   = ${p.adminLvl}\n` +
-        `START_DATE    = "${p.y0}-01-01"\n` +
-        `END_DATE      = "${p.y1}-12-31"\n` +
-        `DOWNLOAD_PRECIP = ${dlPrecip}\n` +
-        `DOWNLOAD_TMAX   = ${dlTmax}\n` +
-        `DOWNLOAD_TMIN   = ${dlTmin}\n` +
-        `DOWNLOAD_SOLAR  = ${dlSolar}\n` +
-        `AGG_METHOD    = "mean"\n` +
-        `TEMPORAL_FREQ = "ME"\n` +
-        `WORK_DIR      = "/content/cdh_${p.iso3}"\n` +
-        `PRECIP_VAR    = "${precipVar}"\n` +
-        `TEMP_VAR      = ${tempVar}\n\n` +
-        `import os; os.makedirs(WORK_DIR, exist_ok=True)\n` +
-        `print(f"{'='*50}")\n` +
-        `print(f"  Country:   {COUNTRY} ({COUNTRY_ISO3})")\n` +
-        `print(f"  Admin:     level {ADMIN_LEVEL} (${adminLabel})")\n` +
-        `print(f"  Period:    {START_DATE} → {END_DATE}")\n` +
-        `print(f"  Variables: ${p.vars.join(', ')}")\n` +
-        `print(f"{'='*50}")\n` +
-        `print("\\n✅ Ready — go to Cell 3 and click ✨ Gemini → Generate")`
-      ),
-
-      geminiCell('CDH Full Pipeline', apiDocs, params, task),
-
-    ], `CDH — Full Pipeline — ${p.country} ${p.y0}–${p.y1}`);
-  }
-
-  // ─── Generate notebook and open in Colab ─────────────────────────
+  // ── Launch: open the GitHub notebook URL with params in Colab ────
   function launchColab() {
-    const p = getParams();
-
-    // Pick the right builder
-    const builders = {
-      download:  buildDownloadNotebook,
-      processor: buildProcessorNotebook,
-      plots:     buildPlotsNotebook,
-      full:      buildFullPipelineNotebook,
-    };
-    const notebook = builders[currentSkill](p);
-
-    // Encode as base64 and open via Colab's gist import trick
-    // Colab accepts: colab.new?import_notebook=data:...(base64)
-    const json    = JSON.stringify(notebook);
-    const b64     = btoa(unescape(encodeURIComponent(json)));
-    const dataUrl = 'data:application/json;base64,' + b64;
-
-    // Colab URL that accepts a data: notebook
-    const colabUrl = 'https://colab.research.google.com/notebook#create=true&content=' + encodeURIComponent(dataUrl);
-
+    const url = buildColabUrl();
     closeModal();
-    window.open(colabUrl, '_blank');
+    window.open(url, '_blank');
   }
 
-  // ─── Init ────────────────────────────────────────────────────────
-  updatePreview();
-</script>
-</body>
+  // ── Upload banner (fallback message) ─────────────────────────────
+  function showUploadBanner(fileName) {
+    const old = document.getElementById('upload-banner');
+    if (old) old.remove();
+    const banner = document.createElement('div');
+    banner.id = 'upload-banner';
+    banner.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#1e2535;border:1px solid rgba(74,222,154,0.4);border-radius:12px;
+      padding:18px 24px;z-index:9999;max-width:520px;width:calc(100% - 48px);
+      box-shadow:0 8px 32px rgba(0,0,0,0.5);`;
+    banner.innerHTML = `<div style="display:flex;align-items:flex-start;gap:14px;">
+      <div style="font-size:22px">✅</div>
+      <div style="flex:1;font-size:13px;color:#7a8099;line-height:1.6">
+        <strong style="color:#e8eaf0;display:block;margin-bottom:4px">Colab is opening</strong>
+        The notebook will load with your parameters pre-configured.<br>
+        Run Cell 1 → Cell 2 → click ✨ Gemini in Cell 3 → Run
+      </div>
+      <button onclick="document.getElementById('upload-banner').remove()"
+        style="background:none;border:none;color:#7a8099;cursor:pointer;font-size:18px">✕</button>
+    </div>`;
+    document.body.appendChild(banner);
+    setTimeout(() => { if (banner.parentNode) banner.remove(); }, 12000);
+  }
+</script></body>
 </html>
