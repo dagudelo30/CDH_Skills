@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CDH Skills — CGIAR Climate Data Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1117;
+    --surface: #161b27;
+    --surface2: #1e2535;
+    --border: rgba(255,255,255,0.07);
+    --border-hover: rgba(255,255,255,0.15);
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --accent-green: #4ade9a;
+    --accent-blue: #5b9cf6;
+    --accent-amber: #f5b944;
+    --accent-teal: #34d4c8;
+    --tag-bg: rgba(255,255,255,0.05);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Instrument Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── GRID BACKGROUND ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── GLOW ORBS ─── */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(120px);
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.18;
+  }
+  .orb-1 { width: 600px; height: 600px; background: #1a5c3a; top: -200px; left: -100px; }
+  .orb-2 { width: 500px; height: 500px; background: #1a3a6e; bottom: 100px; right: -100px; }
+
+  /* ─── NAV ─── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    height: 60px;
+    background: rgba(14,17,23,0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent-green);
+    letter-spacing: 0.05em;
+  }
+
+  .nav-logo .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative;
+    z-index: 1;
+    padding: 100px 40px 80px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-green);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: rgba(74,222,154,0.08);
+    border: 1px solid rgba(74,222,154,0.2);
+    border-radius: 20px;
+    padding: 5px 14px;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 6vw, 72px);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent-green);
+  }
+
+  .hero p {
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 580px;
+    margin-bottom: 36px;
+  }
+
+  .hero-cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--accent-green);
+    color: #0a1a10;
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: 1px solid var(--border-hover);
+    color: var(--text);
+    font-size: 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-ghost:hover { background: var(--surface); border-color: var(--accent-green); color: var(--accent-green); }
+
+  /* ─── STATS BAR ─── */
+  .stats-bar {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 0 0 72px;
+  }
+
+  .stat {
+    flex: 1;
+    padding: 20px 40px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── SECTION ─── */
+  .section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  .section-header {
+    margin-bottom: 40px;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ─── WORKFLOW STRIP ─── */
+  .workflow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 72px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .wf-step {
+    flex: 1;
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .wf-step::after {
+    content: '→';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+    z-index: 2;
+  }
+  .wf-step:last-child::after { display: none; }
+
+  .wf-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .wf-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .wf-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .wf-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ─── SKILL CARDS ─── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  .skill-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.25s, transform 0.2s, box-shadow 0.25s;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .skill-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+  }
+
+  .skill-card-top {
+    padding: 24px 24px 0;
+  }
+
+  .skill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+
+  .badge-green { background: rgba(74,222,154,0.1); color: var(--accent-green); border: 1px solid rgba(74,222,154,0.2); }
+  .badge-blue  { background: rgba(91,156,246,0.1); color: var(--accent-blue);  border: 1px solid rgba(91,156,246,0.2); }
+  .badge-amber { background: rgba(245,185,68,0.1); color: var(--accent-amber); border: 1px solid rgba(245,185,68,0.2); }
+
+  .skill-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  .skill-card p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.65;
+    margin-bottom: 20px;
+  }
+
+  .skill-capabilities {
+    padding: 0 24px 20px;
+    flex: 1;
+  }
+
+  .cap-label {
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .cap-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .cap-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .cap-list li::before {
+    content: '›';
+    color: var(--muted);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .skill-tags {
+    padding: 0 24px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ─── CODE PREVIEW ─── */
+  .skill-preview {
+    margin: 0 24px 20px;
+    background: #0a0e14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .preview-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .preview-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .preview-code {
+    padding: 12px 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: #7a9cc4;
+    line-height: 1.7;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .preview-code .kw   { color: #c98af5; }
+  .preview-code .fn   { color: #5b9cf6; }
+  .preview-code .str  { color: #a8cc7e; }
+  .preview-code .cm   { color: #4a5568; }
+
+  /* ─── CARD FOOTER ─── */
+  .skill-card-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.2);
+  }
+
+  .btn-colab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    border: none;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .btn-colab-primary {
+    background: var(--accent-green);
+    color: #0a1a10;
+  }
+  .btn-colab-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  .btn-colab-secondary {
+    background: transparent;
+    border: 1px solid var(--border-hover);
+    color: var(--muted);
+  }
+  .btn-colab-secondary:hover { color: var(--text); border-color: var(--muted); }
+
+  /* colab icon SVG */
+  .colab-icon {
+    width: 16px; height: 16px;
+    flex-shrink: 0;
+  }
+
+  /* ─── CHAIN SECTION ─── */
+  .chain-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    margin-top: 48px;
+  }
+
+  .chain-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .chain-desc {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .chain-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .chain-step {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    padding-bottom: 24px;
+  }
+
+  .chain-step:last-child { padding-bottom: 0; }
+
+  .chain-step-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .chain-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1px solid var(--border-hover);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .chain-connector {
+    flex: 1;
+    width: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+
+  .chain-step:last-child .chain-connector { display: none; }
+
+  .chain-content { flex: 1; }
+  .chain-step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .chain-step-code {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent-blue);
+    background: rgba(91,156,246,0.07);
+    border: 1px solid rgba(91,156,246,0.12);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+
+  .chain-cta {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 32px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .footer-brand {
+    font-family: 'DM Mono', monospace;
+    color: var(--accent-green);
+    font-size: 12px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--text); }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-hover);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 540px;
+    overflow: hidden;
+    animation: slideUp 0.25s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(16px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-header {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 22px; }
+  .modal-subtitle { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body { padding: 20px 24px; }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-family: 'DM Mono', monospace;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-hover);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    transition: border-color 0.2s;
+    outline: none;
+    appearance: none;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent-green); }
+  .form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%237a8099' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 36px; cursor: pointer; }
+  .form-select option { background: var(--surface); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .modal-preview {
+    background: #0a0e14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    line-height: 1.8;
+    color: #7a9cc4;
+  }
+
+  .prompt-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .prompt-text { color: #b0c4d8; }
+  .prompt-highlight { color: var(--accent-green); }
+
+  .modal-footer {
+    padding: 16px 24px 20px;
+    display: flex;
+    gap: 10px;
+  }
+
+  @media (max-width: 700px) {
+    nav { padding: 0 20px; }
+    .hero { padding: 60px 20px 48px; }
+    .stats-bar { flex-direction: column; }
+    .stat { border-right: none; border-bottom: 1px solid var(--border); }
+    .section { padding: 0 20px 60px; }
+    .workflow { flex-direction: column; }
+    .wf-step::after { display: none; }
+    .form-row { grid-template-columns: 1fr; }
+    footer { flex-direction: column; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="nav-logo">
+    <span class="dot"></span>
+    CDH / skills
+  </div>
+  <ul class="nav-links">
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#workflow">How it works</a></li>
+    <li><a href="https://github.com/dagudelo30/CDH_Skills" target="_blank">GitHub ↗</a></li>
+  </ul>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <span>●</span> CGIAR Climate Data Hub
+  </div>
+  <h1>Climate AI skills,<br><em>ready to run</em></h1>
+  <p>
+    Reproducible climate data workflows powered by AI. Pick a skill, configure your zone and period,
+    and open a fully-prepared notebook in Google Colab — no local setup required.
+  </p>
+  <div class="hero-cta">
+    <a href="#skills" class="btn-primary">
+      Browse skills ↓
+    </a>
+    <a href="https://github.com/dagudelo30/CDH_Skills" target="_blank" class="btn-ghost">
+      View on GitHub
+    </a>
+  </div>
+</section>
+
+<!-- ─── STATS ─── -->
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-value">3</div>
+    <div class="stat-label">skills available</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">5+</div>
+    <div class="stat-label">climate variables</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">0</div>
+    <div class="stat-label">local install needed</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">MIT</div>
+    <div class="stat-label">open license</div>
+  </div>
+</div>
+
+<!-- ─── HOW IT WORKS ─── -->
+<section class="section" id="workflow">
+  <div class="section-header">
+    <div class="section-label">Process</div>
+    <h2 class="section-title">From skill card to results in 3 steps</h2>
+  </div>
+
+  <div class="workflow">
+    <div class="wf-step">
+      <div class="wf-num">01</div>
+      <div class="wf-icon">🗂</div>
+      <div class="wf-title">Choose a skill</div>
+      <div class="wf-desc">Select the workflow that fits your analysis need</div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-num">02</div>
+      <div class="wf-icon">⚙️</div>
+      <div class="wf-title">Set parameters</div>
+      <div class="wf-desc">Country, period, variables — the form builds the prompt</div>
+    </div>
+    <div class="wf-step">
+      <div class="wf-num">03</div>
+      <div class="wf-icon">🚀</div>
+      <div class="wf-title">Open in Colab</div>
+      <div class="wf-desc">Notebook opens with AI pre-loaded. Run cells, get results</div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SKILLS ─── -->
+<section class="section" id="skills">
+  <div class="section-header">
+    <div class="section-label">Available</div>
+    <h2 class="section-title">Skills library</h2>
+  </div>
+
+  <div class="skills-grid">
+
+    <!-- SKILL 1: Climate Data Download -->
+    <div class="skill-card">
+      <div class="skill-card-top">
+        <div class="skill-badge badge-green">
+          <span>●</span> climate-data-download
+        </div>
+        <h3>Download climate data</h3>
+        <p>Route any climate variable to the right source — CHIRPS, CHIRTS-ERA5, NASA POWER, or AgERA5 — and fetch it automatically.</p>
+      </div>
+
+      <div class="skill-capabilities">
+        <div class="cap-label">What it does</div>
+        <ul class="cap-list">
+          <li>Precipitation from CHIRPS (daily, 0.05°)</li>
+          <li>Tmax / Tmin from CHIRTS-ERA5</li>
+          <li>Solar radiation and humidity from NASA POWER</li>
+          <li>Wind speed, VPD, Ref. ET from AgERA5</li>
+        </ul>
+      </div>
+
+      <div class="skill-tags">
+        <span class="tag">CHIRPS</span>
+        <span class="tag">CHIRTS-ERA5</span>
+        <span class="tag">NASA POWER</span>
+        <span class="tag">AgERA5</span>
+        <span class="tag">xarray</span>
+      </div>
+
+      <div class="skill-preview">
+        <div class="preview-bar">
+          <div class="preview-dot" style="background:#ff6058"></div>
+          <div class="preview-dot" style="background:#ffbe2e"></div>
+          <div class="preview-dot" style="background:#2acf44"></div>
+        </div>
+        <div class="preview-code"><span class="cm"># Claude routes the download plan:</span>
+<span class="kw">User:</span> <span class="str">"daily precip + Tmax for Honduras 2010–2022"</span>
+
+<span class="cm"># Skill outputs ready-to-run code:</span>
+chirps = <span class="fn">fetch_chirps</span>(<span class="str">"Honduras"</span>, <span class="str">"2010-01-01"</span>, <span class="str">"2022-12-31"</span>)
+chirts = <span class="fn">fetch_chirts</span>(<span class="str">"Honduras"</span>, ..., variables=[<span class="str">"tmax"</span>])</div>
+      </div>
+
+      <div class="skill-card-footer">
+        <button class="btn-colab btn-colab-primary" onclick="openModal('download')">
+          <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
+          Open in Colab
+        </button>
+        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+      </div>
+    </div>
+
+    <!-- SKILL 2: Geospatial Cube Processor -->
+    <div class="skill-card">
+      <div class="skill-card-top">
+        <div class="skill-badge badge-blue">
+          <span>●</span> geospatial-cube-processor
+        </div>
+        <h3>Process spatial cubes</h3>
+        <p>Clip rasters to admin boundaries, stack multi-source datasets to a common grid, and compute zonal statistics per admin unit.</p>
+      </div>
+
+      <div class="skill-capabilities">
+        <div class="cap-label">What it does</div>
+        <ul class="cap-list">
+          <li>Mask to country / province / district (GADM v4.1)</li>
+          <li>Stack CHIRPS + CHIRTS + NASA POWER into one cube</li>
+          <li>Compute mean / sum / max per admin unit</li>
+          <li>Export monthly / seasonal / annual CSVs</li>
+        </ul>
+      </div>
+
+      <div class="skill-tags">
+        <span class="tag">rioxarray</span>
+        <span class="tag">geopandas</span>
+        <span class="tag">GADM</span>
+        <span class="tag">zonal stats</span>
+        <span class="tag">xarray</span>
+      </div>
+
+      <div class="skill-preview">
+        <div class="preview-bar">
+          <div class="preview-dot" style="background:#ff6058"></div>
+          <div class="preview-dot" style="background:#ffbe2e"></div>
+          <div class="preview-dot" style="background:#2acf44"></div>
+        </div>
+        <div class="preview-code">cube = <span class="fn">stack_datasets</span>([chirps, chirts, power],
+                        target_resolution=<span class="str">"coarsest"</span>)
+
+eth  = <span class="fn">mask_to_admin</span>(cube, <span class="str">"ETH"</span>, admin_level=<span class="str">1</span>)
+
+df   = <span class="fn">summarize_by_admin</span>(eth, boundaries,
+                        agg_method=<span class="str">"mean"</span>,
+                        temporal_freq=<span class="str">"ME"</span>)</div>
+      </div>
+
+      <div class="skill-card-footer">
+        <button class="btn-colab btn-colab-primary" onclick="openModal('processor')">
+          <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
+          Open in Colab
+        </button>
+        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+      </div>
+    </div>
+
+    <!-- SKILL 3: Notebook Plots -->
+    <div class="skill-card">
+      <div class="skill-card-top">
+        <div class="skill-badge badge-amber">
+          <span>●</span> notebook-plots
+        </div>
+        <h3>Visualize & plot</h3>
+        <p>Interactive Plotly and hvplot charts written directly into your Colab notebook — time series, spatial maps, seasonal patterns, and dashboards.</p>
+      </div>
+
+      <div class="skill-capabilities">
+        <div class="cap-label">What it does</div>
+        <ul class="cap-list">
+          <li>Time series with trend lines per admin unit</li>
+          <li>Interactive spatial raster maps (hvplot / Plotly)</li>
+          <li>Seasonal climatology dual-axis charts</li>
+          <li>Full variable dashboard grid</li>
+        </ul>
+      </div>
+
+      <div class="skill-tags">
+        <span class="tag">Plotly</span>
+        <span class="tag">hvplot</span>
+        <span class="tag">matplotlib</span>
+        <span class="tag">time series</span>
+        <span class="tag">maps</span>
+      </div>
+
+      <div class="skill-preview">
+        <div class="preview-bar">
+          <div class="preview-dot" style="background:#ff6058"></div>
+          <div class="preview-dot" style="background:#ffbe2e"></div>
+          <div class="preview-dot" style="background:#2acf44"></div>
+        </div>
+        <div class="preview-code"><span class="fn">plot_time_series</span>(df, variable=<span class="str">"precip"</span>,
+                   title=<span class="str">"Monthly Precip — Ethiopia"</span>)
+
+<span class="fn">plot_seasonal_pattern</span>(df, precip_var=<span class="str">"precip"</span>,
+                       temp_var=<span class="str">"tmax"</span>, admin_unit=<span class="str">"Oromia"</span>)
+
+<span class="fn">plot_dashboard</span>(ds, ncols=<span class="str">2</span>)</div>
+      </div>
+
+      <div class="skill-card-footer">
+        <button class="btn-colab btn-colab-primary" onclick="openModal('plots')">
+          <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
+          Open in Colab
+        </button>
+        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CHAIN IT ALL -->
+  <div class="chain-box">
+    <div class="chain-title">Run the full pipeline</div>
+    <div class="chain-desc">The three skills chain together — download raw data, process into a spatial cube, then visualize. Open the end-to-end notebook and Claude walks you through each step.</div>
+
+    <div class="chain-steps">
+      <div class="chain-step">
+        <div class="chain-step-line">
+          <div class="chain-num" style="color:var(--accent-green); border-color:var(--accent-green)">1</div>
+          <div class="chain-connector"></div>
+        </div>
+        <div class="chain-content">
+          <div class="chain-step-title">Download climate data</div>
+          <div class="chain-step-code">chirps = fetch_chirps("Kenya", "2010-01-01", "2022-12-31")</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-step-line">
+          <div class="chain-num" style="color:var(--accent-blue); border-color:var(--accent-blue)">2</div>
+          <div class="chain-connector"></div>
+        </div>
+        <div class="chain-content">
+          <div class="chain-step-title">Mask, stack and summarize</div>
+          <div class="chain-step-code">cube = stack_datasets([chirps, chirts])
+df   = summarize_by_admin(cube, boundaries, temporal_freq="ME")</div>
+        </div>
+      </div>
+      <div class="chain-step">
+        <div class="chain-step-line">
+          <div class="chain-num" style="color:var(--accent-amber); border-color:var(--accent-amber)">3</div>
+        </div>
+        <div class="chain-content">
+          <div class="chain-step-title">Plot and explore</div>
+          <div class="chain-step-code">plot_time_series(df, variable="precip")
+plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chain-cta">
+      <button class="btn-colab btn-colab-primary" style="flex:0 0 auto; padding:10px 22px;" onclick="openModal('full')">
+        <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
+        Open full pipeline in Colab
+      </button>
+      <span style="font-size:13px; color:var(--muted)">Configure country + period, Claude handles the rest</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-brand">CGIAR · CDH_Skills · MIT</div>
+  <div class="footer-links">
+    <a href="https://github.com/dagudelo30/CDH_Skills" target="_blank">GitHub</a>
+    <a href="mailto:andres.aguilar@cgiar.org">Contact</a>
+    <a href="https://www.cgiar.org" target="_blank">CGIAR</a>
+  </div>
+</footer>
+
+<!-- ─── MODAL ─── -->
+<div class="modal-overlay" id="modal" onclick="closeOnBackdrop(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Configure skill</div>
+        <div class="modal-subtitle" id="modal-subtitle">Set your parameters — Claude will personalize the notebook</div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="country">Country / Region</label>
+          <select class="form-select" id="country" onchange="updatePrompt()">
+            <option value="">Select country...</option>
+            <option>Ethiopia</option>
+            <option>Kenya</option>
+            <option>Honduras</option>
+            <option>Colombia</option>
+            <option>Ghana</option>
+            <option>Nigeria</option>
+            <option>India</option>
+            <option>Bangladesh</option>
+            <option>Custom (type below)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="admin-level">Admin level</label>
+          <select class="form-select" id="admin-level" onchange="updatePrompt()">
+            <option value="0">Country (level 0)</option>
+            <option value="1">Province / State (level 1)</option>
+            <option value="2">District (level 2)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="year-start">Start year</label>
+          <input class="form-input" type="number" id="year-start" min="1981" max="2024" value="2015" oninput="updatePrompt()">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="year-end">End year</label>
+          <input class="form-input" type="number" id="year-end" min="1981" max="2024" value="2022" oninput="updatePrompt()">
+        </div>
+      </div>
+
+      <div class="form-group" id="vars-group">
+        <label class="form-label">Variables</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="var-precip" checked onchange="updatePrompt()"> Precipitation
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="var-tmax" onchange="updatePrompt()"> Tmax
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="var-tmin" onchange="updatePrompt()"> Tmin
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="var-solar" onchange="updatePrompt()"> Solar radiation
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-preview">
+        <span class="prompt-label">Claude system prompt (pre-loaded in Colab)</span>
+        <div id="prompt-preview" class="prompt-text"></div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-colab btn-colab-primary" style="flex:1" id="launch-btn" onclick="launchColab()">
+        <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
+        Launch in Colab
+      </button>
+      <button class="btn-colab btn-colab-secondary" style="flex:0 0 auto" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ─── Skill configs ───────────────────────────────────────────────
+  const REPO = 'https://github.com/dagudelo30/CDH_Skills';
+  const NOTEBOOK_BASE = 'https://colab.research.google.com/github/dagudelo30/CDH_Skills/blob/main';
+
+  const skillConfig = {
+    download: {
+      title: 'Climate data download',
+      subtitle: 'climate-data-download skill',
+      notebook: '/cdh/notebooks/climate_data_download.ipynb',
+      showVars: true,
+    },
+    processor: {
+      title: 'Geospatial cube processor',
+      subtitle: 'geospatial-cube-processor skill',
+      notebook: '/cdh/notebooks/geospatial_cube_processor.ipynb',
+      showVars: true,
+    },
+    plots: {
+      title: 'Notebook plots',
+      subtitle: 'notebook-plots skill',
+      notebook: '/cdh/notebooks/notebook_plots.ipynb',
+      showVars: true,
+    },
+    full: {
+      title: 'Full pipeline',
+      subtitle: 'Download → process → visualize',
+      notebook: '/cdh/notebooks/full_pipeline.ipynb',
+      showVars: true,
+    },
+  };
+
+  let currentSkill = 'download';
+
+  function openModal(skill) {
+    currentSkill = skill;
+    const cfg = skillConfig[skill];
+    document.getElementById('modal-title').textContent = cfg.title;
+    document.getElementById('modal-subtitle').textContent = cfg.subtitle;
+    document.getElementById('modal').classList.add('open');
+    updatePrompt();
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+
+  function closeOnBackdrop(e) {
+    if (e.target === document.getElementById('modal')) closeModal();
+  }
+
+  function getVars() {
+    const v = [];
+    if (document.getElementById('var-precip').checked) v.push('precipitation');
+    if (document.getElementById('var-tmax').checked) v.push('Tmax');
+    if (document.getElementById('var-tmin').checked) v.push('Tmin');
+    if (document.getElementById('var-solar').checked) v.push('solar radiation');
+    return v.length ? v.join(', ') : 'precipitation';
+  }
+
+  function buildPrompt() {
+    const country = document.getElementById('country').value || '[your country]';
+    const adminLevel = document.getElementById('admin-level').value;
+    const y0 = document.getElementById('year-start').value;
+    const y1 = document.getElementById('year-end').value;
+    const vars = getVars();
+    const adminLabel = ['country', 'province/state', 'district'][adminLevel] || 'country';
+    const skillName = skillConfig[currentSkill].title;
+
+    return `You are a CDH climate data specialist.\nSkill: ${skillName}\n\nUser parameters:\n• Country/Region: ${country}\n• Admin level: ${adminLevel} (${adminLabel})\n• Period: ${y0}–${y1}\n• Variables: ${vars}\n\nPlease generate ready-to-run Python code using the cdh package to complete this workflow. Ask the user to confirm before downloading.`;
+  }
+
+  function updatePrompt() {
+    const p = buildPrompt();
+    const el = document.getElementById('prompt-preview');
+    el.innerHTML = p.replace(/\n/g, '<br>').replace(
+      /(•[^<]+)/g, '<span class="prompt-highlight">$1</span>'
+    );
+  }
+
+  function launchColab() {
+    const cfg = skillConfig[currentSkill];
+    // Build the Colab URL — notebook is the primary destination
+    // The prompt is encoded as a comment in the URL fragment for future notebook cell injection
+    const notebookUrl = NOTEBOOK_BASE + cfg.notebook;
+    const prompt = encodeURIComponent(buildPrompt());
+
+    // Open Colab with the notebook; prompt is carried as a URL param
+    // When the notebook is set up, its first cell reads the param via JS injection
+    const finalUrl = notebookUrl + '?cdh_prompt=' + prompt;
+    window.open(finalUrl, '_blank');
+    closeModal();
+  }
+
+  // init prompt on load
+  updatePrompt();
+</script>
+</body>
+</html>
