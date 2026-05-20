@@ -770,7 +770,7 @@
   <ul class="nav-links">
     <li><a href="#skills">Skills</a></li>
     <li><a href="#workflow">How it works</a></li>
-    <li><a href="https://github.com/dagudelo30/CDH_Skills" target="_blank">GitHub ↗</a></li>
+    <li><a href="https://github.com/anaguilarar/CDH_Skills" target="_blank">GitHub ↗</a></li>
   </ul>
 </nav>
 
@@ -788,7 +788,7 @@
     <a href="#skills" class="btn-primary">
       Browse skills ↓
     </a>
-    <a href="https://github.com/dagudelo30/CDH_Skills" target="_blank" class="btn-ghost">
+    <a href="https://github.com/anaguilarar/CDH_Skills" target="_blank" class="btn-ghost">
       View on GitHub
     </a>
   </div>
@@ -899,7 +899,7 @@ chirts = <span class="fn">fetch_chirts</span>(<span class="str">"Honduras"</span
           <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
           Open in Colab
         </button>
-        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+        <a href="https://github.com/anaguilarar/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
       </div>
     </div>
 
@@ -952,7 +952,7 @@ df   = <span class="fn">summarize_by_admin</span>(eth, boundaries,
           <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
           Open in Colab
         </button>
-        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+        <a href="https://github.com/anaguilarar/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
       </div>
     </div>
 
@@ -1004,7 +1004,7 @@ df   = <span class="fn">summarize_by_admin</span>(eth, boundaries,
           <svg class="colab-icon" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="14" fill="#F9AB00"/><path d="M11 10.5v11l9-5.5-9-5.5z" fill="#fff"/></svg>
           Open in Colab
         </button>
-        <a href="https://github.com/dagudelo30/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
+        <a href="https://github.com/anaguilarar/CDH_Skills/tree/main/.agents/skills" target="_blank" class="btn-colab btn-colab-secondary">Docs</a>
       </div>
     </div>
 
@@ -1063,7 +1063,7 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
 <footer>
   <div class="footer-brand">CGIAR · CDH_Skills · MIT</div>
   <div class="footer-links">
-    <a href="https://github.com/dagudelo30/CDH_Skills" target="_blank">GitHub</a>
+    <a href="https://github.com/anaguilarar/CDH_Skills" target="_blank">GitHub</a>
     <a href="mailto:andres.aguilar@cgiar.org">Contact</a>
     <a href="https://www.cgiar.org" target="_blank">CGIAR</a>
   </div>
@@ -1153,101 +1153,479 @@ plot_seasonal_pattern(df, precip_var="precip", temp_var="tmax")</div>
 </div>
 
 <script>
-  // ─── Skill configs ───────────────────────────────────────────────
-  const REPO = 'https://github.com/dagudelo30/CDH_Skills';
-  const NOTEBOOK_BASE = 'https://colab.research.google.com/github/dagudelo30/CDH_Skills/blob/main';
+  // ─── Config ──────────────────────────────────────────────────────
+  const GITHUB_USER = 'dagudelo30';
+  const REPO_NAME   = 'CDH_Skills';
+
+  const ISO3 = {
+    'Ethiopia':'ETH','Kenya':'KEN','Honduras':'HND','Colombia':'COL',
+    'Ghana':'GHA','Nigeria':'NGA','India':'IND','Bangladesh':'BGD'
+  };
 
   const skillConfig = {
-    download: {
-      title: 'Climate data download',
-      subtitle: 'climate-data-download skill',
-      notebook: '/cdh/notebooks/climate_data_download.ipynb',
-      showVars: true,
-    },
-    processor: {
-      title: 'Geospatial cube processor',
-      subtitle: 'geospatial-cube-processor skill',
-      notebook: '/cdh/notebooks/geospatial_cube_processor.ipynb',
-      showVars: true,
-    },
-    plots: {
-      title: 'Notebook plots',
-      subtitle: 'notebook-plots skill',
-      notebook: '/cdh/notebooks/notebook_plots.ipynb',
-      showVars: true,
-    },
-    full: {
-      title: 'Full pipeline',
-      subtitle: 'Download → process → visualize',
-      notebook: '/cdh/notebooks/full_pipeline.ipynb',
-      showVars: true,
-    },
+    download:  { title: 'Climate data download',     subtitle: 'climate-data-download skill' },
+    processor: { title: 'Geospatial cube processor', subtitle: 'geospatial-cube-processor skill' },
+    plots:     { title: 'Notebook plots',            subtitle: 'notebook-plots skill' },
+    full:      { title: 'Full pipeline',             subtitle: 'Download → process → visualize' },
   };
 
   let currentSkill = 'download';
 
+  // ─── Modal open/close ────────────────────────────────────────────
   function openModal(skill) {
     currentSkill = skill;
     const cfg = skillConfig[skill];
-    document.getElementById('modal-title').textContent = cfg.title;
+    document.getElementById('modal-title').textContent    = cfg.title;
     document.getElementById('modal-subtitle').textContent = cfg.subtitle;
     document.getElementById('modal').classList.add('open');
-    updatePrompt();
+    updatePreview();
+  }
+  function closeModal() { document.getElementById('modal').classList.remove('open'); }
+  function closeOnBackdrop(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+  // ─── Read form values ────────────────────────────────────────────
+  function getParams() {
+    const country   = document.getElementById('country').value || 'Ethiopia';
+    const adminLvl  = document.getElementById('admin-level').value;
+    const y0        = document.getElementById('year-start').value || '2015';
+    const y1        = document.getElementById('year-end').value   || '2022';
+    const iso3      = ISO3[country] || country.slice(0,3).toUpperCase();
+    const vars = [];
+    if (document.getElementById('var-precip').checked) vars.push('precipitation');
+    if (document.getElementById('var-tmax').checked)   vars.push('tmax');
+    if (document.getElementById('var-tmin').checked)   vars.push('tmin');
+    if (document.getElementById('var-solar').checked)  vars.push('solar_rad');
+    return { country, iso3, adminLvl: parseInt(adminLvl), y0, y1,
+             vars: vars.length ? vars : ['precipitation'] };
   }
 
-  function closeModal() {
-    document.getElementById('modal').classList.remove('open');
+  // ─── Live preview ────────────────────────────────────────────────
+  function updatePreview() {
+    const p = getParams();
+    const adminLabel = ['country','province/state','district'][p.adminLvl] || 'country';
+    document.getElementById('prompt-preview').innerHTML =
+      `<span class="prompt-highlight">• Country:</span>  ${p.country} (${p.iso3})<br>` +
+      `<span class="prompt-highlight">• Admin:</span>    level ${p.adminLvl} — ${adminLabel}<br>` +
+      `<span class="prompt-highlight">• Period:</span>   ${p.y0}-01-01 → ${p.y1}-12-31<br>` +
+      `<span class="prompt-highlight">• Variables:</span> ${p.vars.join(', ')}`;
   }
 
-  function closeOnBackdrop(e) {
-    if (e.target === document.getElementById('modal')) closeModal();
+  // ─── Notebook builders ───────────────────────────────────────────
+  // Each builder returns a full .ipynb object (JSON) with parameters
+  // already written into the code cells — no API key, no AI at runtime.
+
+  function makeCell(source, cellType='code') {
+    const lines = source.split('\n').map((l,i,a) => i<a.length-1 ? l+'\n' : l);
+    if (cellType === 'markdown') return {
+      cell_type:'markdown', metadata:{}, source: lines
+    };
+    return {
+      cell_type:'code', execution_count:null, metadata:{}, outputs:[], source: lines
+    };
   }
 
-  function getVars() {
-    const v = [];
-    if (document.getElementById('var-precip').checked) v.push('precipitation');
-    if (document.getElementById('var-tmax').checked) v.push('Tmax');
-    if (document.getElementById('var-tmin').checked) v.push('Tmin');
-    if (document.getElementById('var-solar').checked) v.push('solar radiation');
-    return v.length ? v.join(', ') : 'precipitation';
+  function notebookShell(cells, title) {
+    return {
+      nbformat:4, nbformat_minor:5,
+      metadata:{
+        kernelspec:{display_name:'Python 3',language:'python',name:'python3'},
+        language_info:{name:'python',version:'3.10.0'},
+        colab:{provenance:[],name:title}
+      },
+      cells
+    };
   }
 
-  function buildPrompt() {
-    const country = document.getElementById('country').value || '[your country]';
-    const adminLevel = document.getElementById('admin-level').value;
-    const y0 = document.getElementById('year-start').value;
-    const y1 = document.getElementById('year-end').value;
-    const vars = getVars();
-    const adminLabel = ['country', 'province/state', 'district'][adminLevel] || 'country';
-    const skillName = skillConfig[currentSkill].title;
+  // ── SKILL 1: Download ──
+  function buildDownloadNotebook(p) {
+    const dlPrecip = p.vars.includes('precipitation');
+    const dlTmax   = p.vars.includes('tmax');
+    const dlTmin   = p.vars.includes('tmin');
+    const dlSolar  = p.vars.includes('solar_rad');
 
-    return `You are a CDH climate data specialist.\nSkill: ${skillName}\n\nUser parameters:\n• Country/Region: ${country}\n• Admin level: ${adminLevel} (${adminLabel})\n• Period: ${y0}–${y1}\n• Variables: ${vars}\n\nPlease generate ready-to-run Python code using the cdh package to complete this workflow. Ask the user to confirm before downloading.`;
+    return notebookShell([
+      makeCell([
+        `# 🌧️ CDH Skill — Climate Data Download`,
+        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
+        ``,
+        `| Parameter | Value |`,
+        `|---|---|`,
+        `| Country | **${p.country}** (${p.iso3}) |`,
+        `| Period | **${p.y0}** → **${p.y1}** |`,
+        `| Variables | **${p.vars.join(', ')}** |`,
+        ``,
+        `Execute cells in order — all parameters are pre-configured.`
+      ].join('\n'), 'markdown'),
+
+      makeCell(
+        `# Cell 1 — Install CDH package\n` +
+        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git\n` +
+        `print('✅ CDH package installed')`
+      ),
+
+      makeCell(
+        `# Cell 2 — Parameters (pre-configured from CDH Skills Hub)\n` +
+        `COUNTRY      = "${p.country}"\n` +
+        `COUNTRY_ISO3 = "${p.iso3}"\n` +
+        `START_DATE   = "${p.y0}-01-01"\n` +
+        `END_DATE     = "${p.y1}-12-31"\n` +
+        `OUTPUT_DIR   = "/content/cdh_${p.iso3}"\n\n` +
+        `DOWNLOAD_PRECIP = ${dlPrecip}\n` +
+        `DOWNLOAD_TMAX   = ${dlTmax}\n` +
+        `DOWNLOAD_TMIN   = ${dlTmin}\n` +
+        `DOWNLOAD_SOLAR  = ${dlSolar}\n\n` +
+        `import os\n` +
+        `os.makedirs(OUTPUT_DIR, exist_ok=True)\n` +
+        `print(f"📍 Country: {COUNTRY} ({COUNTRY_ISO3})")\n` +
+        `print(f"📅 Period:  {START_DATE} → {END_DATE}")\n` +
+        `print(f"📁 Output:  {OUTPUT_DIR}")`
+      ),
+
+      makeCell(
+        `# Cell 3 — Download data\n` +
+        `from cdh import fetch_chirps, fetch_chirts, fetch_nasa_power\n\n` +
+        `datasets = {}\n\n` +
+        `if DOWNLOAD_PRECIP:\n` +
+        `    print("🌧️  Downloading precipitation from CHIRPS...")\n` +
+        `    datasets['precipitation'] = fetch_chirps(COUNTRY, START_DATE, END_DATE)\n` +
+        `    datasets['precipitation'].to_netcdf(f"{OUTPUT_DIR}/chirps_{COUNTRY_ISO3}.nc")\n` +
+        `    print("   ✅ Saved")\n\n` +
+        `tmax_vars = []\n` +
+        `if DOWNLOAD_TMAX: tmax_vars.append("tmax")\n` +
+        `if DOWNLOAD_TMIN: tmax_vars.append("tmin")\n` +
+        `if tmax_vars:\n` +
+        `    print(f"🌡️  Downloading {tmax_vars} from CHIRTS-ERA5...")\n` +
+        `    ds_t = fetch_chirts(COUNTRY, START_DATE, END_DATE, variables=tmax_vars)\n` +
+        `    ds_t.to_netcdf(f"{OUTPUT_DIR}/chirts_{COUNTRY_ISO3}.nc")\n` +
+        `    datasets.update({v: ds_t for v in tmax_vars})\n` +
+        `    print("   ✅ Saved")\n\n` +
+        `if DOWNLOAD_SOLAR:\n` +
+        `    print("☀️  Downloading solar radiation from NASA POWER...")\n` +
+        `    datasets['solar_rad'] = fetch_nasa_power(COUNTRY, START_DATE, END_DATE,\n` +
+        `                                             variables=["ALLSKY_SFC_SW_DWN"])\n` +
+        `    datasets['solar_rad'].to_netcdf(f"{OUTPUT_DIR}/nasa_power_{COUNTRY_ISO3}.nc")\n` +
+        `    print("   ✅ Saved")\n\n` +
+        `print(f"\\n✅ Download complete — {len(datasets)} variable(s) saved to {OUTPUT_DIR}")`
+      ),
+
+      makeCell(
+        `# Cell 4 — Quick inspection\n` +
+        `import os, xarray as xr\n` +
+        `files = [f for f in os.listdir(OUTPUT_DIR) if f.endswith('.nc')]\n` +
+        `for f in files:\n` +
+        `    ds = xr.open_dataset(f"{OUTPUT_DIR}/{f}")\n` +
+        `    print(f"📄 {f}")\n` +
+        `    print(f"   vars:  {list(ds.data_vars)}")\n` +
+        `    print(f"   time:  {str(ds.time.values[0])[:10]} → {str(ds.time.values[-1])[:10]}")\n` +
+        `    print(f"   shape: {dict(ds.dims)}\\n")\n` +
+        `    ds.close()`
+      ),
+
+      makeCell([
+        `## ✅ Next steps`,
+        ``,
+        `Continue with the **Geospatial Cube Processor** skill to clip and summarize your data,`,
+        `or open the **Full Pipeline** to run everything in one go.`
+      ].join('\n'), 'markdown')
+
+    ], `CDH — Climate Data Download — ${p.country} ${p.y0}–${p.y1}`);
   }
 
-  function updatePrompt() {
-    const p = buildPrompt();
-    const el = document.getElementById('prompt-preview');
-    el.innerHTML = p.replace(/\n/g, '<br>').replace(
-      /(•[^<]+)/g, '<span class="prompt-highlight">$1</span>'
-    );
+  // ── SKILL 2: Processor ──
+  function buildProcessorNotebook(p) {
+    const adminLabel = ['country','province/state','district'][p.adminLvl];
+    return notebookShell([
+      makeCell([
+        `# 🗺️ CDH Skill — Geospatial Cube Processor`,
+        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
+        ``,
+        `| Parameter | Value |`,`|---|---|`,
+        `| Country | **${p.country}** (${p.iso3}) |`,
+        `| Admin level | **${p.adminLvl}** — ${adminLabel} |`,
+        `| Period | **${p.y0}** → **${p.y1}** |`
+      ].join('\n'), 'markdown'),
+
+      makeCell(
+        `# Cell 1 — Install\n` +
+        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git geopandas rioxarray\n` +
+        `print('✅ Ready')`
+      ),
+
+      makeCell(
+        `# Cell 2 — Parameters (pre-configured)\n` +
+        `COUNTRY      = "${p.country}"\n` +
+        `COUNTRY_ISO3 = "${p.iso3}"\n` +
+        `ADMIN_LEVEL  = ${p.adminLvl}\n` +
+        `START_DATE   = "${p.y0}-01-01"\n` +
+        `END_DATE     = "${p.y1}-12-31"\n` +
+        `WORK_DIR     = "/content/cdh_${p.iso3}"\n` +
+        `AGG_METHOD   = "mean"    # mean / sum / max / min\n` +
+        `TEMPORAL_FREQ= "ME"      # ME=monthly  QE=quarterly  YE=yearly\n\n` +
+        `import os\n` +
+        `os.makedirs(WORK_DIR, exist_ok=True)\n` +
+        `print(f"📍 {COUNTRY} ({COUNTRY_ISO3}) — admin level {ADMIN_LEVEL}")`
+      ),
+
+      makeCell(
+        `# Cell 3 — Load downloaded NetCDF files\n` +
+        `import xarray as xr, os\n\n` +
+        `nc_files = [f"{WORK_DIR}/{f}" for f in os.listdir(WORK_DIR) if f.endswith('.nc')]\n` +
+        `datasets = [xr.open_dataset(f) for f in nc_files]\n` +
+        `print(f"📦 Loaded {len(datasets)} dataset(s):")\n` +
+        `for f, ds in zip(nc_files, datasets):\n` +
+        `    print(f"   {os.path.basename(f)}: {list(ds.data_vars)}")`
+      ),
+
+      makeCell(
+        `# Cell 4 — Stack, mask to admin boundary and summarize\n` +
+        `from cdh.transform import stack_datasets\n` +
+        `from cdh.spatial  import mask_to_admin\n` +
+        `from cdh.summarize import summarize_by_admin\n\n` +
+        `# Combine all datasets into one cube\n` +
+        `print("🔗 Stacking datasets...")\n` +
+        `cube = stack_datasets(datasets, target_resolution="coarsest") if len(datasets) > 1 else datasets[0]\n\n` +
+        `# Clip to administrative boundary\n` +
+        `print(f"✂️  Clipping to {COUNTRY} admin level {ADMIN_LEVEL}...")\n` +
+        `cube_masked, boundaries = mask_to_admin(cube, COUNTRY_ISO3, admin_level=ADMIN_LEVEL)\n` +
+        `cube_masked.to_netcdf(f"{WORK_DIR}/{COUNTRY_ISO3}_cube.nc")\n` +
+        `print("   ✅ Cube saved")\n\n` +
+        `# Compute zonal statistics per admin unit\n` +
+        `print(f"📊 Summarizing by admin unit ({AGG_METHOD} / {TEMPORAL_FREQ})...")\n` +
+        `output_csv = f"{WORK_DIR}/{COUNTRY_ISO3}_admin{ADMIN_LEVEL}_summary.csv"\n` +
+        `df = summarize_by_admin(cube_masked, boundaries,\n` +
+        `                        agg_method=AGG_METHOD,\n` +
+        `                        temporal_freq=TEMPORAL_FREQ,\n` +
+        `                        output_csv=output_csv)\n` +
+        `print(f"   ✅ {len(df):,} rows saved to {output_csv}")\n` +
+        `df.head(10)`
+      ),
+    ], `CDH — Cube Processor — ${p.country} ${p.y0}–${p.y1}`);
   }
 
+  // ── SKILL 3: Plots ──
+  function buildPlotsNotebook(p) {
+    return notebookShell([
+      makeCell([
+        `# 📊 CDH Skill — Notebook Plots`,
+        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
+        ``,
+        `| Parameter | Value |`,`|---|---|`,
+        `| Country | **${p.country}** (${p.iso3}) |`,
+        `| Variables | **${p.vars.join(', ')}** |`
+      ].join('\n'), 'markdown'),
+
+      makeCell(
+        `# Cell 1 — Install\n` +
+        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git plotly hvplot\n` +
+        `print('✅ Ready')`
+      ),
+
+      makeCell(
+        `# Cell 2 — Parameters (pre-configured)\n` +
+        `COUNTRY      = "${p.country}"\n` +
+        `COUNTRY_ISO3 = "${p.iso3}"\n` +
+        `WORK_DIR     = "/content/cdh_${p.iso3}"\n` +
+        `PRECIP_VAR   = "${p.vars.includes('precipitation') ? 'precipitation' : p.vars[0]}"\n` +
+        `TEMP_VAR     = "${p.vars.includes('tmax') ? 'tmax' : 'None'}"\n` +
+        `print(f"📁 Reading data from: {WORK_DIR}")`
+      ),
+
+      makeCell(
+        `# Cell 3 — Load summary CSV\n` +
+        `import pandas as pd, glob\n\n` +
+        `csv_files = glob.glob(f"{WORK_DIR}/*_summary.csv")\n` +
+        `if not csv_files:\n` +
+        `    print("⚠️  No summary CSV found. Run the Geospatial Cube Processor skill first.")\n` +
+        `else:\n` +
+        `    df = pd.read_csv(csv_files[0], parse_dates=['time'])\n` +
+        `    print(f"✅ Loaded: {csv_files[0]}")\n` +
+        `    print(f"   Shape: {df.shape}  |  Columns: {list(df.columns)}")\n` +
+        `    display(df.head())`
+      ),
+
+      makeCell(
+        `# Cell 4 — Time series by admin unit\n` +
+        `from cdh.plots import plot_time_series\n\n` +
+        `fig = plot_time_series(df, variable=PRECIP_VAR,\n` +
+        `                       title=f"Monthly Precipitation — {COUNTRY}")\n` +
+        `fig.show()`
+      ),
+
+      makeCell(
+        `# Cell 5 — Seasonal climatology\n` +
+        `from cdh.plots import plot_seasonal_pattern\n\n` +
+        `fig = plot_seasonal_pattern(df,\n` +
+        `    precip_var=PRECIP_VAR,\n` +
+        `    temp_var=TEMP_VAR if TEMP_VAR != 'None' else None,\n` +
+        `    title=f"Seasonal Climatology — {COUNTRY}")\n` +
+        `fig.show()`
+      ),
+
+      makeCell(
+        `# Cell 6 — Comparison across regions\n` +
+        `from cdh.plots import plot_admin_comparison\n\n` +
+        `fig = plot_admin_comparison(df, variable=PRECIP_VAR,\n` +
+        `    year=df['time'].dt.year.max(),\n` +
+        `    title=f"Precipitation by Region — {COUNTRY}")\n` +
+        `fig.show()`
+      ),
+    ], `CDH — Plots — ${p.country}`);
+  }
+
+  // ── FULL PIPELINE ──
+  function buildFullPipelineNotebook(p) {
+    const dlPrecip = p.vars.includes('precipitation');
+    const dlTmax   = p.vars.includes('tmax');
+    const dlTmin   = p.vars.includes('tmin');
+    const dlSolar  = p.vars.includes('solar_rad');
+    const adminLabel = ['country','province/state','district'][p.adminLvl];
+
+    return notebookShell([
+      makeCell([
+        `# 🌍 CDH Full Pipeline`,
+        `**CGIAR Climate Data Hub** · [${GITHUB_USER}/${REPO_NAME}](https://github.com/${GITHUB_USER}/${REPO_NAME})`,
+        ``,
+        `\`climate-data-download\` → \`geospatial-cube-processor\` → \`notebook-plots\``,
+        ``,
+        `| Parameter | Value |`,`|---|---|`,
+        `| Country | **${p.country}** (${p.iso3}) |`,
+        `| Admin level | **${p.adminLvl}** — ${adminLabel} |`,
+        `| Period | **${p.y0}-01-01** → **${p.y1}-12-31** |`,
+        `| Variables | **${p.vars.join(', ')}** |`,
+        ``,
+        `**Run All** (Runtime → Run all) — no configuration needed.`
+      ].join('\n'), 'markdown'),
+
+      makeCell(
+        `# Cell 1 — Install\n` +
+        `!pip install -q git+https://github.com/${GITHUB_USER}/${REPO_NAME}.git geopandas rioxarray plotly hvplot\n` +
+        `print('✅ All packages installed')`
+      ),
+
+      makeCell(
+        `# Cell 2 — Parameters (pre-configured from CDH Skills Hub)\n` +
+        `COUNTRY      = "${p.country}"\n` +
+        `COUNTRY_ISO3 = "${p.iso3}"\n` +
+        `ADMIN_LEVEL  = ${p.adminLvl}\n` +
+        `START_DATE   = "${p.y0}-01-01"\n` +
+        `END_DATE     = "${p.y1}-12-31"\n` +
+        `DOWNLOAD_PRECIP = ${dlPrecip}\n` +
+        `DOWNLOAD_TMAX   = ${dlTmax}\n` +
+        `DOWNLOAD_TMIN   = ${dlTmin}\n` +
+        `DOWNLOAD_SOLAR  = ${dlSolar}\n` +
+        `AGG_METHOD    = "mean"\n` +
+        `TEMPORAL_FREQ = "ME"\n` +
+        `WORK_DIR      = f"/content/cdh_${p.iso3}"\n\n` +
+        `import os\n` +
+        `os.makedirs(WORK_DIR, exist_ok=True)\n` +
+        `print(f"\\n{'='*50}")\n` +
+        `print(f"  Country:   {COUNTRY} ({COUNTRY_ISO3})")\n` +
+        `print(f"  Admin:     level {ADMIN_LEVEL} ({adminLabel})")\n` +
+        `print(f"  Period:    {START_DATE} → {END_DATE}")\n` +
+        `print(f"  Variables: ${p.vars.join(', ')}")\n` +
+        `print(f"{'='*50}")`
+      ),
+
+      makeCell(
+        `# Cell 3 — STEP 1: Download climate data\n` +
+        `from cdh import fetch_chirps, fetch_chirts, fetch_nasa_power\n\n` +
+        `print("\\n=== STEP 1: Downloading climate data ===")\n` +
+        `datasets = {}\n\n` +
+        `if DOWNLOAD_PRECIP:\n` +
+        `    print("  🌧️  Precipitation (CHIRPS)...")\n` +
+        `    ds = fetch_chirps(COUNTRY, START_DATE, END_DATE)\n` +
+        `    ds.to_netcdf(f"{WORK_DIR}/chirps_{COUNTRY_ISO3}.nc")\n` +
+        `    datasets['precipitation'] = ds\n\n` +
+        `t_vars = [v for v, d in [("tmax",DOWNLOAD_TMAX),("tmin",DOWNLOAD_TMIN)] if d]\n` +
+        `if t_vars:\n` +
+        `    print(f"  🌡️  {t_vars} (CHIRTS-ERA5)...")\n` +
+        `    ds = fetch_chirts(COUNTRY, START_DATE, END_DATE, variables=t_vars)\n` +
+        `    ds.to_netcdf(f"{WORK_DIR}/chirts_{COUNTRY_ISO3}.nc")\n` +
+        `    for v in t_vars: datasets[v] = ds\n\n` +
+        `if DOWNLOAD_SOLAR:\n` +
+        `    print("  ☀️  Solar radiation (NASA POWER)...")\n` +
+        `    ds = fetch_nasa_power(COUNTRY, START_DATE, END_DATE, variables=["ALLSKY_SFC_SW_DWN"])\n` +
+        `    ds.to_netcdf(f"{WORK_DIR}/nasa_power_{COUNTRY_ISO3}.nc")\n` +
+        `    datasets['solar_rad'] = ds\n\n` +
+        `print(f"  ✅ Downloaded: {list(datasets.keys())}")`
+      ),
+
+      makeCell(
+        `# Cell 4 — STEP 2: Process into spatial cube\n` +
+        `from cdh.transform  import stack_datasets\n` +
+        `from cdh.spatial    import mask_to_admin\n` +
+        `from cdh.summarize  import summarize_by_admin\n\n` +
+        `print("\\n=== STEP 2: Processing spatial cube ===")\n\n` +
+        `ds_list = list(datasets.values())\n` +
+        `cube = stack_datasets(ds_list, target_resolution="coarsest") if len(ds_list)>1 else ds_list[0]\n` +
+        `print(f"  🔗 Stacked {len(ds_list)} dataset(s)")\n\n` +
+        `cube_masked, boundaries = mask_to_admin(cube, COUNTRY_ISO3, admin_level=ADMIN_LEVEL)\n` +
+        `cube_masked.to_netcdf(f"{WORK_DIR}/{COUNTRY_ISO3}_cube.nc")\n` +
+        `print(f"  ✂️  Masked to {COUNTRY} admin level {ADMIN_LEVEL}")\n\n` +
+        `output_csv = f"{WORK_DIR}/{COUNTRY_ISO3}_summary.csv"\n` +
+        `df = summarize_by_admin(cube_masked, boundaries,\n` +
+        `                        agg_method=AGG_METHOD,\n` +
+        `                        temporal_freq=TEMPORAL_FREQ,\n` +
+        `                        output_csv=output_csv)\n` +
+        `print(f"  📊 Summary: {len(df):,} rows — {df['admin_unit'].nunique()} admin units")\n` +
+        `display(df.head())`
+      ),
+
+      makeCell(
+        `# Cell 5 — STEP 3: Visualize results\n` +
+        `from cdh.plots import (plot_time_series, plot_spatial_map,\n` +
+        `                       plot_seasonal_pattern, plot_admin_comparison)\n\n` +
+        `print("\\n=== STEP 3: Generating visualizations ===")\n\n` +
+        `PRECIP_VAR = "${p.vars.includes('precipitation') ? 'precipitation' : p.vars[0]}"\n` +
+        `TEMP_VAR   = ${p.vars.includes('tmax') ? '"tmax"' : 'None'}\n\n` +
+        `# Time series\n` +
+        `plot_time_series(df, variable=PRECIP_VAR,\n` +
+        `    title=f"Monthly Precipitation — {COUNTRY}").show()\n\n` +
+        `# Seasonal climatology\n` +
+        `plot_seasonal_pattern(df, precip_var=PRECIP_VAR, temp_var=TEMP_VAR,\n` +
+        `    title=f"Seasonal Climatology — {COUNTRY}").show()\n\n` +
+        `# Regional comparison\n` +
+        `plot_admin_comparison(df, variable=PRECIP_VAR,\n` +
+        `    year=df['time'].dt.year.max(),\n` +
+        `    title=f"Precipitation by Region — {COUNTRY}").show()\n\n` +
+        `# Spatial map (mean)\n` +
+        `import xarray as xr\n` +
+        `cube_mean = xr.open_dataset(f"{WORK_DIR}/{COUNTRY_ISO3}_cube.nc").mean('time')\n` +
+        `plot_spatial_map(cube_mean, variable=PRECIP_VAR,\n` +
+        `    title=f"Mean Precipitation — {COUNTRY} {START_DATE[:4]}–{END_DATE[:4]}").show()\n\n` +
+        `print("\\n✅ Pipeline complete!")`
+      ),
+    ], `CDH — Full Pipeline — ${p.country} ${p.y0}–${p.y1}`);
+  }
+
+  // ─── Generate notebook and open in Colab ─────────────────────────
   function launchColab() {
-    const cfg = skillConfig[currentSkill];
-    // Build the Colab URL — notebook is the primary destination
-    // The prompt is encoded as a comment in the URL fragment for future notebook cell injection
-    const notebookUrl = NOTEBOOK_BASE + cfg.notebook;
-    const prompt = encodeURIComponent(buildPrompt());
+    const p = getParams();
 
-    // Open Colab with the notebook; prompt is carried as a URL param
-    // When the notebook is set up, its first cell reads the param via JS injection
-    const finalUrl = notebookUrl + '?cdh_prompt=' + prompt;
-    window.open(finalUrl, '_blank');
+    // Pick the right builder
+    const builders = {
+      download:  buildDownloadNotebook,
+      processor: buildProcessorNotebook,
+      plots:     buildPlotsNotebook,
+      full:      buildFullPipelineNotebook,
+    };
+    const notebook = builders[currentSkill](p);
+
+    // Encode as base64 and open via Colab's gist import trick
+    // Colab accepts: colab.new?import_notebook=data:...(base64)
+    const json    = JSON.stringify(notebook);
+    const b64     = btoa(unescape(encodeURIComponent(json)));
+    const dataUrl = 'data:application/json;base64,' + b64;
+
+    // Colab URL that accepts a data: notebook
+    const colabUrl = 'https://colab.research.google.com/notebook#create=true&content=' + encodeURIComponent(dataUrl);
+
     closeModal();
+    window.open(colabUrl, '_blank');
   }
 
-  // init prompt on load
-  updatePrompt();
+  // ─── Init ────────────────────────────────────────────────────────
+  updatePreview();
 </script>
 </body>
 </html>
